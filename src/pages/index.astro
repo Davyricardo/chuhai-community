@@ -1,10 +1,25 @@
 ---
-// 首页骨架：先跑通部署链路，下一步接入 D1 数据层
+import { desc, eq } from 'drizzle-orm';
+import { getDB } from '../db';
+import { articles, topics } from '../db/schema';
+import { getSessionUser, sessionCookieName } from '../lib/auth';
+
+const db = getDB(Astro.locals);
+const user = await getSessionUser(db, Astro.cookies.get(sessionCookieName())?.value);
+
+const latest = await db
+  .select()
+  .from(articles)
+  .where(eq(articles.published, 1))
+  .orderBy(desc(articles.publishedAt))
+  .limit(8);
+
+const hotTopics = await db.select().from(topics).orderBy(desc(topics.voteCount)).limit(5);
+
 const nav = [
   { href: '/articles', label: '文章' },
   { href: '/topics', label: '话题' },
   { href: '/tools', label: '工具' },
-  { href: '/auth/login', label: '登录' },
 ];
 ---
 
@@ -13,32 +28,98 @@ const nav = [
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>出海内容社区</title>
+    <title>出海内容社区 · CHUHAI</title>
     <meta name="description" content="出海实战分享、话题投票与工具推荐社区" />
+    <style>
+      body { font-family: system-ui, sans-serif; max-width: 860px; margin: 0 auto; padding: 0 20px 60px; }
+      header { display: flex; align-items: center; justify-content: space-between; padding: 16px 0; border-bottom: 1px solid #eee; }
+      nav a { margin-left: 14px; color: #374151; text-decoration: none; font-size: 14px; }
+      nav a:hover { color: #2563eb; }
+      h1 { font-size: 30px; margin: 40px 0 8px; }
+      .lead { color: #6b7280; margin-top: 0; }
+      h2 { font-size: 18px; margin-top: 36px; }
+      ul { list-style: none; padding: 0; }
+      li { padding: 10px 0; border-bottom: 1px solid #f3f4f6; }
+      li a { color: #111827; text-decoration: none; font-weight: 500; }
+      li a:hover { color: #2563eb; }
+      .meta { color: #9ca3af; font-size: 12px; }
+      .empty { color: #9ca3af; font-size: 14px; }
+      .auth { font-size: 14px; }
+      .auth a { color: #2563eb; margin-left: 10px; }
+    </style>
   </head>
   <body>
     <header>
-      <a href="/"><strong>CHUHAI</strong></a>
+      <a href="/" style="font-weight: 700; text-decoration: none; color: #111">CHUHAI</a>
       <nav>
         {nav.map((item) => <a href={item.href}>{item.label}</a>)}
+        <span class="auth">
+          {
+            user ? (
+              <>
+                <span>{user.displayName}</span>
+                <a href="/admin">后台</a>
+                <a href="#" id="logout">退出</a>
+              </>
+            ) : (
+              <>
+                <a href="/auth/login">登录</a>
+                <a href="/auth/register">注册</a>
+              </>
+            )
+          }
+        </span>
       </nav>
     </header>
-    <main>
-      <section>
-        <h1>出海内容社区</h1>
-        <p>实战分享 · 话题投票 · 工具推荐</p>
-      </section>
-      <section>
-        <h2>最新文章</h2>
-        <p>数据层接入后显示</p>
-      </section>
-      <section>
-        <h2>热门话题</h2>
-        <p>数据层接入后显示</p>
-      </section>
-    </main>
-    <footer>
-      <small>© 2026 chuhai community</small>
-    </footer>
+
+    <h1>出海内容社区</h1>
+    <p class="lead">实战分享 · 话题投票 · 工具推荐</p>
+
+    <section>
+      <h2>最新文章</h2>
+      {
+        latest.length ? (
+          <ul>
+            {latest.map((a) => (
+              <li>
+                <a href={`/articles/${a.slug}`}>{a.title}</a>
+                <div class="meta">{new Date(a.publishedAt).toISOString().slice(0, 10)}</div>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p class="empty">还没有文章，去后台发布第一篇吧。</p>
+        )
+      }
+    </section>
+
+    <section>
+      <h2>热门话题</h2>
+      {
+        hotTopics.length ? (
+          <ul>
+            {hotTopics.map((t) => (
+              <li>
+                <a href="/topics">{t.title}</a>
+                <div class="meta">{t.voteCount} 票 · {t.status}</div>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p class="empty">还没有话题，去 /topics 提交一个。</p>
+        )
+      }
+    </section>
+
+    <script>
+      const logout = document.getElementById('logout');
+      if (logout) {
+        logout.addEventListener('click', async (e) => {
+          e.preventDefault();
+          await fetch('/api/auth/logout', { method: 'POST' });
+          location.reload();
+        });
+      }
+    </script>
   </body>
 </html>

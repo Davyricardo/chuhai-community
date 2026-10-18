@@ -1,0 +1,90 @@
+---
+const title = '注册 · CHUHAI';
+---
+
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{title}</title>
+    <style>
+      body { font-family: system-ui, sans-serif; max-width: 420px; margin: 60px auto; padding: 0 20px; }
+      h1 { font-size: 22px; }
+      input { display: block; width: 100%; padding: 10px; margin: 10px 0; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; }
+      button { padding: 10px 16px; border: 0; border-radius: 8px; background: #2563eb; color: #fff; cursor: pointer; }
+      button:disabled { background: #9ca3af; }
+      .row { display: flex; gap: 8px; align-items: center; }
+      .row input { flex: 1; margin: 0; }
+      #msg { margin-top: 12px; font-size: 14px; color: #b91c1c; }
+      a { color: #2563eb; }
+    </style>
+  </head>
+  <body>
+    <h1>注册</h1>
+    <form id="form">
+      <div class="row">
+        <input name="email" type="email" placeholder="邮箱" required />
+        <button type="button" id="send">发送验证码</button>
+      </div>
+      <input name="code" placeholder="6 位验证码" required />
+      <input name="displayName" placeholder="昵称（可留空）" />
+      <input name="password" type="password" placeholder="密码（可留空，留空则用验证码登录）" />
+      <button type="submit">注册</button>
+    </form>
+    <p id="msg"></p>
+    <p><a href="/auth/login">已有账号？去登录</a></p>
+
+    <script>
+      const form = document.getElementById('form');
+      const msg = document.getElementById('msg');
+      const sendBtn = document.getElementById('send');
+
+      sendBtn.addEventListener('click', async () => {
+        const email = form.email.value.trim();
+        if (!email) return (msg.textContent = '请先填写邮箱');
+        sendBtn.disabled = true;
+        let left = 60;
+        sendBtn.textContent = left + 's';
+        const timer = setInterval(() => {
+          left -= 1;
+          sendBtn.textContent = left + 's';
+          if (left <= 0) {
+            clearInterval(timer);
+            sendBtn.disabled = false;
+            sendBtn.textContent = '重新发送';
+          }
+        }, 1000);
+
+        const res = await fetch('/api/auth/request-code', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, purpose: 'register' }),
+        }).then((r) => r.json());
+        msg.textContent = res.ok ? '验证码已发送，请查收邮件' : res.error || '发送失败';
+        msg.style.color = res.ok ? '#15803d' : '#b91c1c';
+      });
+
+      form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const payload = {
+          email: form.email.value.trim(),
+          code: form.code.value.trim(),
+          displayName: form.displayName.value.trim(),
+          password: form.password.value,
+        };
+        const res = await fetch('/api/auth/register', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        }).then((r) => r.json());
+        if (res.ok) {
+          location.href = '/';
+        } else {
+          msg.textContent = res.error || '注册失败';
+          msg.style.color = '#b91c1c';
+        }
+      });
+    </script>
+  </body>
+</html>
