@@ -1,0 +1,44 @@
+---
+// 首页骨架：先跑通部署链路，下一步接入 D1 数据层
+const nav = [
+  { href: '/articles', label: '文章' },
+  { href: '/topics', label: '话题' },
+  { href: '/tools', label: '工具' },
+  { href: '/auth/login', label: '登录' },
+];
+---
+
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>出海内容社区</title>
+    <meta name="description" content="出海实战分享、话题投票与工具推荐社区" />
+  </head>
+  <body>
+    <header>
+      <a href="/"><strong>CHUHAI</strong></a>
+      <nav>
+        {nav.map((item) => <a href={item.href}>{item.label}</a>)}
+      </nav>
+    </header>
+    <main>
+      <section>
+        <h1>出海内容社区</h1>
+        <p>实战分享 · 话题投票 · 工具推荐</p>
+      </section>
+      <section>
+        <h2>最新文章</h2>
+        <p>数据层接入后显示</p>
+      </section>
+      <section>
+        <h2>热门话题</h2>
+        <p>数据层接入后显示</p>
+      </section>
+    </main>
+    <footer>
+      <small>© 2026 chuhai community</small>
+    </footer>
+  </body>
+</html>
