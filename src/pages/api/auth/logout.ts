@@ -5,7 +5,7 @@ import { destroySession, sessionCookieName } from '../../../lib/auth';
 export const POST: APIRoute = async ({ cookies, locals }) => {
   const sid = cookies.get(sessionCookieName())?.value;
   if (sid) {
-    await destroySession(getDB(locals), sid);
+    await destroySession(getDB(), sid);
   }
   return new Response(JSON.stringify({ ok: true }), {
     status: 200,

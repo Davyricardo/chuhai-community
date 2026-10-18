@@ -2,14 +2,12 @@
  * 邮件发送：走 Resend HTTP API（Workers 原生支持 fetch，无需 SMTP）。
  * API Key 通过 Workers secret 注入：wrangler secret put RESEND_API_KEY
  */
-export type MailEnv = {
-  runtime?: { env?: { RESEND_API_KEY?: string } };
-};
+import { env } from 'cloudflare:workers';
 
 const FROM = 'CHUHAI <noreply@kittywizards.com>';
 
-async function send(locals: MailEnv, to: string, subject: string, text: string): Promise<boolean> {
-  const key = locals?.runtime?.env?.RESEND_API_KEY;
+async function send(to: string, subject: string, text: string): Promise<boolean> {
+  const key = (env as { RESEND_API_KEY?: string }).RESEND_API_KEY;
   if (!key) {
     console.error('[mail] 缺少 RESEND_API_KEY，请用 wrangler secret put 注入');
     return false;
@@ -30,9 +28,8 @@ async function send(locals: MailEnv, to: string, subject: string, text: string):
 }
 
 /** 发送注册/登录验证码 */
-export function sendCodeEmail(locals: MailEnv, to: string, code: string): Promise<boolean> {
+export function sendCodeEmail(to: string, code: string): Promise<boolean> {
   return send(
-    locals,
     to,
     '【CHUHAI】你的验证码',
     `你的验证码是 ${code}，10 分钟内有效。\n\n如果不是你本人操作，请忽略此邮件。`,

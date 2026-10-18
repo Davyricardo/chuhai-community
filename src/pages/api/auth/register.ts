@@ -20,7 +20,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
     return json({ ok: false, error: '邮箱和验证码必填' }, 400);
   }
 
-  const db = getDB(locals);
+  const db = getDB();
 
   if (await findUserByEmail(db, email)) {
     return json({ ok: false, error: '该邮箱已注册' }, 409);

@@ -12,7 +12,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
   const email = String(body.email || '').trim();
   const password = String(body.password || '');
 
-  const db = getDB(locals);
+  const db = getDB();
   const user = await findUserByEmail(db, email);
 
   if (!user || !(await verifyPassword(password, user.passwordHash))) {

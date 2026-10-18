@@ -25,9 +25,9 @@ export const POST: APIRoute = async ({ request, locals }) => {
     });
   }
 
-  const db = getDB(locals);
+  const db = getDB();
   const code = await issueEmailCode(db, email, purpose);
-  const sent = await sendCodeEmail(locals, email, code);
+  const sent = await sendCodeEmail(email, code);
 
   return new Response(
     JSON.stringify({ ok: sent, error: sent ? null : '邮件发送失败，请稍后重试' }),
