@@ -6,6 +6,7 @@ import {
   createUser,
   findUserByEmail,
   hashPassword,
+  isFirstUser,
   sessionCookieName,
 } from '../../../lib/auth';
 
@@ -32,11 +33,15 @@ export const POST: APIRoute = async ({ request, locals }) => {
   }
 
   const passwordHash = password ? await hashPassword(password) : null;
-  const user = await createUser(db, email, displayName, passwordHash);
+  const first = await isFirstUser(db);
+  const user = await createUser(db, email, displayName, passwordHash, first ? 'admin' : 'user');
   const sessionId = await createSession(db, user.id);
 
   return new Response(
-    JSON.stringify({ ok: true, user: { id: user.id, email: user.email, displayName: user.displayName } }),
+    JSON.stringify({
+      ok: true,
+      user: { id: user.id, email: user.email, displayName: user.displayName, role: user.role },
+    }),
     {
       status: 200,
       headers: {

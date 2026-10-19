@@ -1,0 +1,79 @@
+import { desc, eq, like, or } from 'drizzle-orm';
+import { getDB } from '../../db';
+import { articles } from '../../db/schema';
+import { getSessionUser, sessionCookieName } from '../../lib/auth';
+
+const db = getDB();
+const user = await getSessionUser(db, Astro.cookies.get(sessionCookieName())?.value);
+const q = (Astro.url.searchParams.get('q') || '').trim();
+
+const base = db.select().from(articles).where(eq(articles.published, 1));
+const list = q
+  ? await base
+      .where(or(like(articles.title, `%${q}%`), like(articles.summary, `%${q}%`), like(articles.tags, `%${q}%`)))
+      .orderBy(desc(articles.publishedAt))
+      .limit(50)
+  : await base.orderBy(desc(articles.publishedAt)).limit(50);
+---
+
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{q ? `搜索：${q}` : '文章'} · CHUHAI</title>
+    <style>
+      body { font-family: system-ui, sans-serif; max-width: 860px; margin: 0 auto; padding: 0 20px 60px; }
+      header { display: flex; align-items: center; justify-content: space-between; padding: 16px 0; border-bottom: 1px solid #eee; }
+      nav a { margin-left: 14px; color: #374151; text-decoration: none; font-size: 14px; }
+      h1 { font-size: 24px; margin: 28px 0 16px; }
+      form.search { display: flex; gap: 8px; margin-bottom: 20px; }
+      form.search input { flex: 1; padding: 10px; border: 1px solid #ddd; border-radius: 8px; }
+      form.search button { padding: 10px 18px; border: 0; border-radius: 8px; background: #2563eb; color: #fff; cursor: pointer; }
+      ul { list-style: none; padding: 0; }
+      li { padding: 14px 0; border-bottom: 1px solid #f3f4f6; }
+      li a { color: #111827; text-decoration: none; font-weight: 600; }
+      li a:hover { color: #2563eb; }
+      .summary { color: #6b7280; font-size: 14px; margin: 6px 0 0; }
+      .meta { color: #9ca3af; font-size: 12px; margin-top: 4px; }
+      .empty { color: #9ca3af; }
+    </style>
+  </head>
+  <body>
+    <header>
+      <a href="/" style="font-weight: 700; text-decoration: none; color: #111">CHUHAI</a>
+      <nav>
+        <a href="/articles">文章</a>
+        <a href="/topics">话题</a>
+        <a href="/tools">工具</a>
+        {user ? <a href="/admin">后台</a> : <a href="/auth/login">登录</a>}
+      </nav>
+    </header>
+
+    <h1>{q ? `搜索「${q}」` : '全部文章'}</h1>
+
+    <form class="search" method="get">
+      <input name="q" value={q} placeholder="搜索文章标题、摘要、标签" />
+      <button type="submit">搜索</button>
+    </form>
+
+    {
+      list.length ? (
+        <ul>
+          {list.map((a) => (
+            <li>
+              <a href={`/articles/${a.slug}`}>{a.title}</a>
+              {a.summary ? <p class="summary">{a.summary}</p> : null}
+              <div class="meta">
+                {new Date(a.publishedAt).toISOString().slice(0, 10)}
+                {a.link ? ' · 外链' : ''}
+              </div>
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <p class="empty">{q ? '没有匹配的文章' : '还没有文章'}</p>
+      )
+    }
+  </body>
+</html>

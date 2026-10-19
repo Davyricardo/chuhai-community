@@ -128,16 +128,23 @@ export async function createUser(
   email: string,
   displayName: string,
   passwordHash: string | null,
+  role: 'user' | 'admin' = 'user',
 ): Promise<User> {
   const user = {
     id: newId(),
     email: email.toLowerCase().trim(),
     passwordHash,
     displayName,
-    role: 'user' as const,
+    role,
     emailVerified: 1,
     createdAt: now(),
   };
   await db.insert(users).values(user);
   return user as User;
+}
+
+/** 是否还没有任何用户（第一个注册者自动成为管理员） */
+export async function isFirstUser(db: DB): Promise<boolean> {
+  const rows = await db.select({ id: users.id }).from(users).limit(1);
+  return rows.length === 0;
 }
