@@ -10,6 +10,7 @@ import {
   sessionCookieName,
 } from '../../../lib/auth';
 import { checkRate, clientIp } from '../../../lib/ratelimit';
+import { verifyTurnstile } from '../../../lib/turnstile';
 
 export const POST: APIRoute = async ({ request, locals }) => {
   const body = await request.json().catch(() => ({}));
@@ -20,6 +21,11 @@ export const POST: APIRoute = async ({ request, locals }) => {
 
   if (!email || !code) {
     return json({ ok: false, error: '邮箱和验证码必填' }, 400);
+  }
+
+  const turnstileToken = String(body.turnstileToken || '');
+  if (!(await verifyTurnstile(turnstileToken, clientIp(request)))) {
+    return json({ ok: false, error: '人机验证未通过，请刷新页面重试' }, 400);
   }
 
   const db = getDB();

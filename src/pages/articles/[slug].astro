@@ -23,6 +23,7 @@ const user = await getSessionUser(db, Astro.cookies.get(sessionCookieName())?.va
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>{article.title} · CHUHAI</title>
     <meta name="description" content={article.summary || article.title} />
+    <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
     <style>
       body { font-family: system-ui, sans-serif; max-width: 720px; margin: 0 auto; padding: 0 20px 60px; line-height: 1.7; }
       header { display: flex; align-items: center; justify-content: space-between; padding: 16px 0; border-bottom: 1px solid #eee; }
@@ -58,6 +59,7 @@ const user = await getSessionUser(db, Astro.cookies.get(sessionCookieName())?.va
         user ? (
           <form id="cform" style="margin-top:16px">
             <textarea id="cinput" placeholder="说点什么…" style="display:block;width:100%;min-height:80px;padding:10px;border:1px solid #ddd;border-radius:8px;box-sizing:border-box;font-family:inherit"></textarea>
+            <div class="cf-turnstile" data-sitekey="0x4AAAAAAFa6NXpqnS6MFmGQ" data-theme="light" style="margin: 10px 0"></div>
             <div style="margin-top:8px;display:flex;align-items:center;gap:10px">
               <button type="submit" style="padding:9px 18px;border:0;border-radius:8px;background:#2563eb;color:#fff;cursor:pointer">发表评论</button>
               <span id="cmsg" style="font-size:13px"></span>
@@ -107,7 +109,12 @@ const user = await getSessionUser(db, Astro.cookies.get(sessionCookieName())?.va
           const res = await fetch('/api/comments', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ targetType: 'article', targetId: articleId, content }),
+            body: JSON.stringify({
+              targetType: 'article',
+              targetId: articleId,
+              content,
+              turnstileToken: document.querySelector('[name="cf-turnstile-response"]')?.value || '',
+            }),
           }).then((r) => r.json());
           if (res.ok) {
             input.value = '';

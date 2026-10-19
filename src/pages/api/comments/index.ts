@@ -4,6 +4,8 @@ import { getDB } from '../../../db';
 import { comments, users } from '../../../db/schema';
 import { getSessionUser, newId, sessionCookieName } from '../../../lib/auth';
 import { checkRate } from '../../../lib/ratelimit';
+import { clientIp } from '../../../lib/ratelimit';
+import { verifyTurnstile } from '../../../lib/turnstile';
 
 function json(data: unknown, status = 200) {
   return new Response(JSON.stringify(data), {
@@ -49,6 +51,11 @@ export const POST: APIRoute = async ({ request, cookies }) => {
   const targetType = String(body.targetType || '').trim();
   const targetId = String(body.targetId || '').trim();
   const content = String(body.content || '').trim();
+
+  const turnstileToken = String(body.turnstileToken || '');
+  if (!(await verifyTurnstile(turnstileToken, clientIp(request)))) {
+    return json({ ok: false, error: '人机验证未通过，请刷新页面重试' }, 400);
+  }
 
   if (!['article', 'topic'].includes(targetType)) return json({ ok: false, error: '类型不合法' }, 400);
   if (!targetId) return json({ ok: false, error: '缺少目标' }, 400);

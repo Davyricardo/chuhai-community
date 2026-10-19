@@ -8,6 +8,7 @@ const title = '注册 · CHUHAI';
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>{title}</title>
+    <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
     <style>
       body { font-family: system-ui, sans-serif; max-width: 420px; margin: 60px auto; padding: 0 20px; }
       h1 { font-size: 22px; }
@@ -30,6 +31,7 @@ const title = '注册 · CHUHAI';
       <input name="code" placeholder="6 位验证码" required />
       <input name="displayName" placeholder="昵称（可留空）" />
       <input name="password" type="password" placeholder="密码（可留空，留空则用验证码登录）" />
+      <div class="cf-turnstile" data-sitekey="0x4AAAAAAFa6NXpqnS6MFmGQ" data-theme="light" style="margin: 10px 0"></div>
       <button type="submit">注册</button>
     </form>
     <p id="msg"></p>
@@ -72,6 +74,7 @@ const title = '注册 · CHUHAI';
           code: form.code.value.trim(),
           displayName: form.displayName.value.trim(),
           password: form.password.value,
+          turnstileToken: document.querySelector('[name="cf-turnstile-response"]')?.value || '',
         };
         const res = await fetch('/api/auth/register', {
           method: 'POST',

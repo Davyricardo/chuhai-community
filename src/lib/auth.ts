@@ -1,4 +1,4 @@
-import { and, eq, gt, isNull } from 'drizzle-orm';
+import { and, desc, eq, gt, isNull } from 'drizzle-orm';
 import bcrypt from 'bcryptjs';
 import { emailCodes, sessions, users, type User } from '../db/schema';
 
@@ -84,7 +84,7 @@ export async function issueEmailCode(
   return code;
 }
 
-/** 校验验证码：正确则标记已使用，防止重用 */
+/** 校验验证码：正确则标记已使用；同一验证码错 5 次即作废（防爆破） */
 export async function consumeEmailCode(
   db: DB,
   email: string,
@@ -98,17 +98,27 @@ export async function consumeEmailCode(
     .where(
       and(
         eq(emailCodes.email, normalized),
-        eq(emailCodes.code, code.trim()),
         eq(emailCodes.purpose, purpose),
         gt(emailCodes.expiresAt, now()),
         isNull(emailCodes.usedAt),
       ),
     )
-    .orderBy(emailCodes.createdAt)
+    .orderBy(desc(emailCodes.createdAt))
     .limit(1);
 
   const row = rows[0];
   if (!row) return false;
+
+  // 已被试错 5 次：直接作废，防止继续爆破
+  if (row.attempts >= 5) {
+    await db.update(emailCodes).set({ usedAt: now() }).where(eq(emailCodes.id, row.id));
+    return false;
+  }
+
+  if (row.code !== code.trim()) {
+    await db.update(emailCodes).set({ attempts: row.attempts + 1 }).where(eq(emailCodes.id, row.id));
+    return false;
+  }
 
   await db.update(emailCodes).set({ usedAt: now() }).where(eq(emailCodes.id, row.id));
   return true;

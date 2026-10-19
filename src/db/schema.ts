@@ -26,6 +26,7 @@ export const emailCodes = sqliteTable(
     purpose: text('purpose').notNull().default('register'), // register | login | reset
     expiresAt: integer('expires_at').notNull(),
     usedAt: integer('used_at'),
+    attempts: integer('attempts').notNull().default(0),
     createdAt: integer('created_at').notNull(),
   },
   (t) => [index('email_codes_email_idx').on(t.email)],
