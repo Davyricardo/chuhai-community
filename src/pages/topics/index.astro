@@ -2,117 +2,104 @@
 import { desc } from 'drizzle-orm';
 import { getDB } from '../../db';
 import { topics } from '../../db/schema';
-import { getSessionUser, sessionCookieName } from '../../lib/auth';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import TopicCard from '../../components/TopicCard.astro';
 
 const db = getDB();
-const user = await getSessionUser(db, Astro.cookies.get(sessionCookieName())?.value);
+const user = Astro.locals.user ?? null;
 const list = await db.select().from(topics).orderBy(desc(topics.voteCount), desc(topics.createdAt)).limit(50);
 ---
 
-<!DOCTYPE html>
-<html lang="zh-CN">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>话题 · CHUHAI</title>
-    <style>
-      body { font-family: system-ui, sans-serif; max-width: 760px; margin: 0 auto; padding: 0 20px 60px; }
-      header { display: flex; align-items: center; justify-content: space-between; padding: 16px 0; border-bottom: 1px solid #eee; }
-      nav a { margin-left: 14px; color: #374151; text-decoration: none; font-size: 14px; }
-      h1 { font-size: 24px; margin: 28px 0 8px; }
-      .lead { color: #6b7280; font-size: 14px; margin: 0 0 20px; }
-      .card { display: flex; gap: 14px; align-items: flex-start; padding: 16px 0; border-bottom: 1px solid #f3f4f6; }
-      .votes { display: flex; flex-direction: column; align-items: center; min-width: 52px; }
-      .votes button { width: 44px; padding: 6px 0; border: 1px solid #d1d5db; background: #fff; border-radius: 8px; cursor: pointer; font-size: 16px; }
-      .votes button:hover { border-color: #2563eb; color: #2563eb; }
-      .votes button.voted { background: #2563eb; border-color: #2563eb; color: #fff; }
-      .votes .n { font-size: 13px; color: #6b7280; margin-top: 4px; }
-      .body h3 { margin: 0 0 4px; font-size: 16px; }
-      .body p { margin: 0; color: #6b7280; font-size: 14px; }
-      .status { display: inline-block; font-size: 11px; padding: 2px 8px; border-radius: 999px; background: #eff6ff; color: #2563eb; margin-left: 6px; }
-      form.new { margin: 24px 0; padding: 16px; background: #f9fafb; border-radius: 12px; }
-      form.new input, form.new textarea { display: block; width: 100%; padding: 10px; margin: 8px 0; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; font-family: inherit; }
-      form.new textarea { min-height: 70px; }
-      form.new button { padding: 9px 18px; border: 0; border-radius: 8px; background: #2563eb; color: #fff; cursor: pointer; }
-      #msg { font-size: 13px; margin-top: 6px; }
-      .empty { color: #9ca3af; }
-    </style>
-  </head>
-  <body>
-    <header>
-      <a href="/" style="font-weight: 700; text-decoration: none; color: #111">CHUHAI</a>
-      <nav>
-        <a href="/articles">文章</a>
-        <a href="/topics">话题</a>
-        <a href="/search">搜索</a>
-        {user ? <a href="/admin">后台</a> : <a href="/auth/login">登录</a>}
-      </nav>
-    </header>
-
-    <h1>话题征集</h1>
-    <p class="lead">投票选出你最想了解的方向，高票会优先创作。</p>
+<BaseLayout title="话题征集" description="投票选出你最想了解的出海话题，高票优先创作">
+  <div class="container" style="padding-block:var(--space-8); max-width:var(--container-reading);">
+    <h1 style="margin:0 0 var(--space-2); font-size:var(--font-size-24); font-weight:800;">话题征集</h1>
+    <p style="margin:0 0 var(--space-6); font-size:var(--font-size-14); color:var(--color-text-muted);">
+      投票选出你最想了解的方向，高票会优先创作。
+    </p>
 
     {
       user ? (
-        <form class="new" id="newTopic">
-          <input name="title" placeholder="话题标题（必填）" required />
-          <textarea name="description" placeholder="补充说明（可选）"></textarea>
-          <button type="submit">提交话题</button>
-          <p id="msg"></p>
+        <form class="card" id="newTopic" style="margin-bottom:var(--space-6); padding:var(--space-5);">
+          <div class="form-field">
+            <label class="form-label" for="t-title">话题标题</label>
+            <input class="form-input" id="t-title" name="title" maxlength="80" placeholder="例如：Stripe 个人开发者怎么过审？" required />
+          </div>
+          <div class="form-field">
+            <label class="form-label" for="t-desc">补充说明（可选）</label>
+            <textarea class="form-textarea" id="t-desc" name="description" maxlength="500" placeholder="想了解的具体问题、场景"></textarea>
+          </div>
+          <div style="display:flex; align-items:center; gap:var(--space-3);">
+            <button class="btn btn--primary" type="submit">提交话题</button>
+            <span id="msg" style="font-size:var(--font-size-13); color:var(--color-danger);"></span>
+          </div>
         </form>
       ) : (
-        <p class="empty"><a href="/auth/login">登录</a> 后可以提交话题和投票。</p>
+        <div class="card" style="margin-bottom:var(--space-6); text-align:center; font-size:var(--font-size-14); color:var(--color-text-muted);">
+          <a href="/auth/login">登录</a> 后可以提交话题和投票。
+        </div>
       )
     }
 
-    <section id="list">
+    <section id="list" style="display:flex; flex-direction:column; gap:var(--space-3);">
       {
         list.length ? (
-          list.map((t) => (
-            <div class="card" data-id={t.id}>
-              <div class="votes">
-                <button class="vbtn" data-id={t.id} title={user ? '投票' : '登录后可投票'}>▲</button>
-                <span class="n" data-count={t.id}>{t.voteCount}</span>
-              </div>
-              <div class="body">
-                <h3>
-                  {t.title}
-                  {t.status !== 'open' ? <span class="status">{t.status}</span> : null}
-                </h3>
-                {t.description ? <p>{t.description}</p> : null}
-              </div>
-            </div>
-          ))
+          list.map((t) => <TopicCard topic={t} loggedIn={!!user} />)
         ) : (
-          <p class="empty">还没有话题。</p>
+          <div class="card" style="text-align:center; color:var(--color-text-muted); font-size:var(--font-size-14); padding-block:var(--space-8);">
+            还没有话题，成为第一个提交者。
+          </div>
         )
       }
     </section>
+  </div>
 
-    <script define:vars={{ loggedIn: !!user }}>
-      document.querySelectorAll('.vbtn').forEach((btn) => {
-        btn.addEventListener('click', async () => {
-          if (!loggedIn) {
-            location.href = '/auth/login';
-            return;
-          }
-          const id = btn.dataset.id;
-          const res = await fetch(`/api/topics/${id}/vote`, { method: 'POST' }).then((r) => r.json()).catch(() => ({}));
+  <script define:vars={{ loggedIn: !!user }}>
+    // 乐观更新：先改数字再发请求，失败回滚
+    document.querySelectorAll('.vote-btn').forEach((btn) => {
+      btn.addEventListener('click', async () => {
+        if (!loggedIn) {
+          location.href = '/auth/login';
+          return;
+        }
+        const id = btn.dataset.id;
+        const countEl = document.querySelector(`[data-count="${id}"]`);
+        const before = parseInt(countEl?.textContent || '0', 10);
+        const wasVoted = btn.classList.contains('vote-btn--voted');
+        const optimistic = wasVoted ? Math.max(0, before - 1) : before + 1;
+
+        btn.classList.toggle('vote-btn--voted', !wasVoted);
+        if (countEl) countEl.textContent = String(optimistic);
+        btn.disabled = true;
+
+        try {
+          const res = await fetch(`/api/topics/${id}/vote`, { method: 'POST' }).then((r) => r.json());
           if (res.ok) {
-            const n = document.querySelector(`[data-count="${id}"]`);
-            if (n) n.textContent = String(res.voteCount);
-            btn.classList.toggle('voted', !!res.voted);
-          } else if (res.error) {
-            alert(res.error);
+            if (countEl) countEl.textContent = String(res.voteCount);
+            btn.classList.toggle('vote-btn--voted', !!res.voted);
+          } else {
+            // 回滚
+            btn.classList.toggle('vote-btn--voted', wasVoted);
+            if (countEl) countEl.textContent = String(before);
+            if (res.error) alert(res.error);
           }
-        });
+        } catch {
+          btn.classList.toggle('vote-btn--voted', wasVoted);
+          if (countEl) countEl.textContent = String(before);
+        } finally {
+          btn.disabled = false;
+        }
       });
+    });
 
-      const form = document.getElementById('newTopic');
-      if (form) {
-        form.addEventListener('submit', async (e) => {
-          e.preventDefault();
-          const msg = document.getElementById('msg');
+    const form = document.getElementById('newTopic');
+    if (form) {
+      form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const msg = document.getElementById('msg');
+        const btn = form.querySelector('button[type="submit"]');
+        btn.disabled = true;
+        msg.textContent = '';
+        try {
           const res = await fetch('/api/topics', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -125,10 +112,13 @@ const list = await db.select().from(topics).orderBy(desc(topics.voteCount), desc
             location.reload();
           } else {
             msg.textContent = res.error || '提交失败';
-            msg.style.color = '#b91c1c';
           }
-        });
-      }
-    </script>
-  </body>
-</html>
+        } catch {
+          msg.textContent = '网络异常，请稍后重试';
+        } finally {
+          btn.disabled = false;
+        }
+      });
+    }
+  </script>
+</BaseLayout>

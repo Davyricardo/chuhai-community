@@ -2,68 +2,73 @@
 import { and, desc, eq, like } from 'drizzle-orm';
 import { getDB } from '../../db';
 import { articles } from '../../db/schema';
-import { getSessionUser, sessionCookieName } from '../../lib/auth';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import ArticleCard from '../../components/ArticleCard.astro';
 
 const db = getDB();
-const user = await getSessionUser(db, Astro.cookies.get(sessionCookieName())?.value);
+const active = (Astro.url.searchParams.get('tag') || '').trim();
 
 // 工具推荐：后台发布文章时标签带「工具」即可出现在这里
-const list = await db
+const all = await db
   .select()
   .from(articles)
   .where(and(eq(articles.published, 1), like(articles.tags, '%工具%')))
   .orderBy(desc(articles.publishedAt))
   .limit(50);
+
+// 从工具类文章提取除「工具」外的标签作为分类筛选
+const tagSet = new Map<string, number>();
+for (const a of all) {
+  let tags: string[] = [];
+  try {
+    tags = typeof a.tags === 'string' ? JSON.parse(a.tags) : (a.tags || []);
+  } catch {
+    tags = [];
+  }
+  if (Array.isArray(tags)) {
+    for (const t of tags) {
+      if (t === '工具') continue;
+      tagSet.set(t, (tagSet.get(t) || 0) + 1);
+    }
+  }
+}
+const categories = [...tagSet.entries()].sort((a, b) => b[1] - a[1]).slice(0, 10);
+
+const list = active ? all.filter((a) => (a.tags || '').includes(active)) : all;
 ---
 
-<!DOCTYPE html>
-<html lang="zh-CN">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>工具推荐 · CHUHAI</title>
-    <style>
-      body { font-family: system-ui, sans-serif; max-width: 860px; margin: 0 auto; padding: 0 20px 60px; }
-      header { display: flex; align-items: center; justify-content: space-between; padding: 16px 0; border-bottom: 1px solid #eee; }
-      nav a { margin-left: 14px; color: #374151; text-decoration: none; font-size: 14px; }
-      h1 { font-size: 24px; margin: 28px 0 6px; }
-      .lead { color: #6b7280; font-size: 14px; margin: 0 0 20px; }
-      ul { list-style: none; padding: 0; }
-      li { padding: 14px 0; border-bottom: 1px solid #f3f4f6; }
-      li a { color: #111827; text-decoration: none; font-weight: 600; }
-      li a:hover { color: #2563eb; }
-      .summary { color: #6b7280; font-size: 14px; margin: 6px 0 0; }
-      .empty { color: #9ca3af; }
-    </style>
-  </head>
-  <body>
-    <header>
-      <a href="/" style="font-weight: 700; text-decoration: none; color: #111">CHUHAI</a>
-      <nav>
-        <a href="/articles">文章</a>
-        <a href="/topics">话题</a>
-        <a href="/tools">工具</a>
-        <a href="/search">搜索</a>
-        {user ? <a href="/admin">后台</a> : <a href="/auth/login">登录</a>}
-      </nav>
-    </header>
+<BaseLayout title="工具推荐" description="出海常用的建站、支付、SEO、AI 工具整理">
+  <div class="container" style="padding-block:var(--space-8);">
+    <h1 style="margin:0 0 var(--space-2); font-size:var(--font-size-24); font-weight:800;">工具推荐</h1>
+    <p style="margin:0 0 var(--space-6); font-size:var(--font-size-14); color:var(--color-text-muted); max-width:var(--container-reading);">
+      出海常用的建站、支付、SEO、AI 工具整理。后台发布文章时把标签写成「工具」即可收录到这里。
+    </p>
 
-    <h1>工具推荐</h1>
-    <p class="lead">出海常用的建站、支付、SEO、AI 工具整理。后台发布文章时把标签写成「工具」即可收录到这里。</p>
+    {
+      categories.length > 0 && (
+        <nav aria-label="工具分类" style="display:flex; flex-wrap:wrap; gap:var(--space-2); margin-bottom:var(--space-6);">
+          <a href="/tools" class="tag" style={!active ? 'background-color:var(--color-primary-subtle); color:var(--color-primary-text); border-color:var(--color-primary-border); font-weight:600;' : ''}>
+            全部 <span style="color:var(--color-text-muted); margin-left:var(--space-1);">{all.length}</span>
+          </a>
+          {categories.map(([tag, count]) => (
+            <a href={`/tools?tag=${encodeURIComponent(tag)}`} class="tag" style={active === tag ? 'background-color:var(--color-primary-subtle); color:var(--color-primary-text); border-color:var(--color-primary-border); font-weight:600;' : ''}>
+              {tag} <span style="color:var(--color-text-muted); margin-left:var(--space-1);">{count}</span>
+            </a>
+          ))}
+        </nav>
+      )
+    }
 
     {
       list.length ? (
-        <ul>
-          {list.map((a) => (
-            <li>
-              <a href={`/articles/${a.slug}`}>{a.title}</a>
-              {a.summary ? <p class="summary">{a.summary}</p> : null}
-            </li>
-          ))}
-        </ul>
+        <div class="grid-cards-3">
+          {list.map((a) => <ArticleCard article={a} />)}
+        </div>
       ) : (
-        <p class="empty">还没有工具类文章。去后台发布一篇，标签写「工具」。</p>
+        <div class="card" style="text-align:center; color:var(--color-text-muted); font-size:var(--font-size-14); padding-block:var(--space-8);">
+          {active ? `「${active}」分类下暂无工具` : '还没有工具类文章。去后台发布一篇，标签写「工具」。'}
+        </div>
       )
     }
-  </body>
-</html>
+  </div>
+</BaseLayout>
