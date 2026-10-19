@@ -51,6 +51,78 @@ const user = await getSessionUser(db, Astro.cookies.get(sessionCookieName())?.va
 
     {article.content ? <div class="content">{article.content}</div> : null}
 
+    <section id="comments" style="margin-top:48px;border-top:1px solid #eee;padding-top:20px">
+      <h2 style="font-size:18px;margin:0 0 12px">评论</h2>
+      <div id="clist" style="font-size:14px;color:#374151">加载中…</div>
+      {
+        user ? (
+          <form id="cform" style="margin-top:16px">
+            <textarea id="cinput" placeholder="说点什么…" style="display:block;width:100%;min-height:80px;padding:10px;border:1px solid #ddd;border-radius:8px;box-sizing:border-box;font-family:inherit"></textarea>
+            <div style="margin-top:8px;display:flex;align-items:center;gap:10px">
+              <button type="submit" style="padding:9px 18px;border:0;border-radius:8px;background:#2563eb;color:#fff;cursor:pointer">发表评论</button>
+              <span id="cmsg" style="font-size:13px"></span>
+            </div>
+          </form>
+        ) : (
+          <p style="font-size:14px;color:#9ca3af"><a href="/auth/login" style="color:#2563eb">登录</a> 后可以评论。</p>
+        )
+      }
+    </section>
+
+    <script define:vars={{ articleId: article.id, loggedIn: !!user }}>
+      const listEl = document.getElementById('clist');
+      const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+
+      async function load() {
+        try {
+          const res = await fetch(`/api/comments?targetType=article&targetId=${encodeURIComponent(articleId)}`).then((r) => r.json());
+          const items = res.comments || [];
+          if (!items.length) {
+            listEl.textContent = '还没有评论，来抢沙发。';
+            listEl.style.color = '#9ca3af';
+            return;
+          }
+          listEl.style.color = '#374151';
+          listEl.innerHTML = items
+            .map(
+              (c) => `<div style="padding:12px 0;border-bottom:1px solid #f3f4f6">
+                <div style="font-weight:600;font-size:13px">${esc(c.displayName)}</div>
+                <div style="margin-top:4px;white-space:pre-wrap">${esc(c.content)}</div>
+              </div>`,
+            )
+            .join('');
+        } catch (e) {
+          listEl.textContent = '评论加载失败';
+        }
+      }
+
+      const form = document.getElementById('cform');
+      if (form) {
+        form.addEventListener('submit', async (e) => {
+          e.preventDefault();
+          const input = document.getElementById('cinput');
+          const msg = document.getElementById('cmsg');
+          const content = input.value.trim();
+          if (!content) return;
+          const res = await fetch('/api/comments', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ targetType: 'article', targetId: articleId, content }),
+          }).then((r) => r.json());
+          if (res.ok) {
+            input.value = '';
+            msg.textContent = '';
+            load();
+          } else {
+            msg.textContent = res.error || '发表失败';
+            msg.style.color = '#b91c1c';
+          }
+        });
+      }
+
+      load();
+    </script>
+
     <a class="back" href="/articles">← 返回文章列表</a>
   </body>
 </html>
