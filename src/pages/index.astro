@@ -70,7 +70,7 @@ const statusLabel: Record<string, string> = { open: '征集中', planned: '规�
 
         {
           latest.length ? (
-            <div class="feed-grid">
+            <div class="feed-grid stagger">
               {latest.map((a) => <ArticleCard article={a} />)}
             </div>
           ) : (
