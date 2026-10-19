@@ -2,10 +2,11 @@
 import { desc, eq } from 'drizzle-orm';
 import { getDB } from '../db';
 import { articles, topics } from '../db/schema';
-import { getSessionUser, sessionCookieName } from '../lib/auth';
+import BaseLayout from '../layouts/BaseLayout.astro';
+import ArticleCard from '../components/ArticleCard.astro';
 
 const db = getDB();
-const user = await getSessionUser(db, Astro.cookies.get(sessionCookieName())?.value);
+const user = Astro.locals.user ?? null;
 
 const latest = await db
   .select()
@@ -16,110 +17,109 @@ const latest = await db
 
 const hotTopics = await db.select().from(topics).orderBy(desc(topics.voteCount)).limit(5);
 
-const nav = [
-  { href: '/articles', label: '文章' },
-  { href: '/topics', label: '话题' },
-  { href: '/tools', label: '工具' },
-];
+// 从最新文章提取去重热门标签
+const tagSet = new Map<string, number>();
+for (const a of latest) {
+  let tags: string[] = [];
+  try {
+    tags = typeof a.tags === 'string' ? JSON.parse(a.tags) : (a.tags || []);
+  } catch {
+    tags = [];
+  }
+  if (Array.isArray(tags)) {
+    for (const t of tags) tagSet.set(t, (tagSet.get(t) || 0) + 1);
+  }
+}
+const hotTags = [...tagSet.entries()].sort((a, b) => b[1] - a[1]).slice(0, 8);
+
+const statusLabel: Record<string, string> = { open: '征集中', planned: '规划中', done: '已完成' };
 ---
 
-<!DOCTYPE html>
-<html lang="zh-CN">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>出海内容社区 · CHUHAI</title>
-    <meta name="description" content="出海实战分享、话题投票与工具推荐社区" />
-    <style>
-      body { font-family: system-ui, sans-serif; max-width: 860px; margin: 0 auto; padding: 0 20px 60px; }
-      header { display: flex; align-items: center; justify-content: space-between; padding: 16px 0; border-bottom: 1px solid #eee; }
-      nav a { margin-left: 14px; color: #374151; text-decoration: none; font-size: 14px; }
-      nav a:hover { color: #2563eb; }
-      h1 { font-size: 30px; margin: 40px 0 8px; }
-      .lead { color: #6b7280; margin-top: 0; }
-      h2 { font-size: 18px; margin-top: 36px; }
-      ul { list-style: none; padding: 0; }
-      li { padding: 10px 0; border-bottom: 1px solid #f3f4f6; }
-      li a { color: #111827; text-decoration: none; font-weight: 500; }
-      li a:hover { color: #2563eb; }
-      .meta { color: #9ca3af; font-size: 12px; }
-      .empty { color: #9ca3af; font-size: 14px; }
-      .auth { font-size: 14px; }
-      .auth a { color: #2563eb; margin-left: 10px; }
-    </style>
-  </head>
-  <body>
-    <header>
-      <a href="/" style="font-weight: 700; text-decoration: none; color: #111">CHUHAI</a>
-      <nav>
-        {nav.map((item) => <a href={item.href}>{item.label}</a>)}
-        <span class="auth">
+<BaseLayout title="首页" description="出海实战分享、话题投票与工具推荐社区">
+  <!-- Hero -->
+  <section style="background:var(--gradient-hero-bg); border-bottom:1px solid var(--color-border);">
+    <div class="container" style="padding-block:var(--space-12);">
+      <h1 style="margin:0 0 var(--space-3); font-size:var(--font-size-30); line-height:var(--leading-tight); font-weight:800; background:var(--gradient-brand-text); -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent; color:var(--color-primary-text);">
+        出海实战 · 少走弯路
+      </h1>
+      <p style="margin:0 0 var(--space-6); font-size:var(--font-size-16); color:var(--color-text-secondary); max-width:var(--container-reading);">
+        面向 AI 产品出海与独立开发者的中文社区：真实踩坑记录、工具横评、话题投票决定下一篇文章写什么。
+      </p>
+      {
+        hotTags.length > 0 && (
+          <nav aria-label="热门标签" style="display:flex; flex-wrap:wrap; gap:var(--space-2);">
+            {hotTags.map(([tag, count]) => (
+              <a href={`/articles?q=${encodeURIComponent(tag)}`} class="tag">
+                #{tag} <span style="color:var(--color-text-muted); margin-left:var(--space-1);">{count}</span>
+              </a>
+            ))}
+          </nav>
+        )
+      }
+    </div>
+  </section>
+
+  <div class="container" style="padding-block:var(--space-8);">
+    <div class="layout-community">
+      <!-- 左：最新文章 -->
+      <section aria-labelledby="latest-title">
+        <div style="display:flex; align-items:baseline; justify-content:space-between; gap:var(--space-4); margin-bottom:var(--space-4);">
+          <h2 id="latest-title" style="margin:0; font-size:var(--font-size-18); font-weight:700;">最新文章</h2>
+          <a href="/articles" style="font-size:var(--font-size-13);">查看全部 →</a>
+        </div>
+
+        {
+          latest.length ? (
+            <div class="feed-grid">
+              {latest.map((a) => <ArticleCard article={a} />)}
+            </div>
+          ) : (
+            <div class="card" style="text-align:center; color:var(--color-text-muted); font-size:var(--font-size-14);">
+              还没有文章，去后台发布第一篇吧。
+            </div>
+          )
+        }
+      </section>
+
+      <!-- 右：热门话题 + 征集 CTA -->
+      <aside aria-label="侧边栏" style="display:flex; flex-direction:column; gap:var(--space-5);">
+        <section class="card" style="padding:var(--space-5);">
+          <div style="display:flex; align-items:baseline; justify-content:space-between; margin-bottom:var(--space-4);">
+            <h2 style="margin:0; font-size:var(--font-size-16); font-weight:700;">热门话题</h2>
+            <a href="/topics" style="font-size:var(--font-size-12); color:var(--color-text-muted);">全部</a>
+          </div>
           {
-            user ? (
-              <>
-                <span>{user.displayName}</span>
-                <a href="/admin">后台</a>
-                <a href="#" id="logout">退出</a>
-              </>
+            hotTopics.length ? (
+              <ul style="list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:var(--space-3);">
+                {hotTopics.map((t) => (
+                  <li style="display:flex; align-items:flex-start; justify-content:space-between; gap:var(--space-3);">
+                    <a href="/topics" style="color:var(--color-text); font-size:var(--font-size-14); line-height:var(--leading-snug); font-weight:500;">{t.title}</a>
+                    <span style="flex-shrink:0; display:flex; align-items:center; gap:var(--space-2);">
+                      <span class="badge badge--{t.status}">{statusLabel[t.status] || t.status}</span>
+                      <span style="font-size:var(--font-size-13); color:var(--color-text-muted); font-variant-numeric:tabular-nums;">{t.voteCount}</span>
+                    </span>
+                  </li>
+                ))}
+              </ul>
             ) : (
-              <>
-                <a href="/auth/login">登录</a>
-                <a href="/auth/register">注册</a>
-              </>
+              <p style="margin:0; font-size:var(--font-size-14); color:var(--color-text-muted);">还没有话题，去 /topics 提交一个。</p>
             )
           }
-        </span>
-      </nav>
-    </header>
+        </section>
 
-    <h1>出海内容社区</h1>
-    <p class="lead">实战分享 · 话题投票 · 工具推荐</p>
+        <section style="background:var(--gradient-cta-card); border:1px solid var(--color-primary-border); border-radius:var(--radius-xl); padding:var(--space-5);">
+          <h2 style="margin:0 0 var(--space-2); font-size:var(--font-size-16); font-weight:700;">下一篇文章写什么？</h2>
+          <p style="margin:0 0 var(--space-4); font-size:var(--font-size-14); color:var(--color-text-secondary); line-height:var(--leading-normal);">
+            提交你想了解的出海话题，票数最高的优先安排。
+          </p>
+          <a href="/topics" class="btn btn--primary">参与话题征集</a>
+        </section>
+      </aside>
+    </div>
+  </div>
+</BaseLayout>
 
-    <section>
-      <h2>最新文章</h2>
-      {
-        latest.length ? (
-          <ul>
-            {latest.map((a) => (
-              <li>
-                <a href={`/articles/${a.slug}`}>{a.title}</a>
-                <div class="meta">{new Date(a.publishedAt).toISOString().slice(0, 10)}</div>
-              </li>
-            ))}
-          </ul>
-        ) : (
-          <p class="empty">还没有文章，去后台发布第一篇吧。</p>
-        )
-      }
-    </section>
-
-    <section>
-      <h2>热门话题</h2>
-      {
-        hotTopics.length ? (
-          <ul>
-            {hotTopics.map((t) => (
-              <li>
-                <a href="/topics">{t.title}</a>
-                <div class="meta">{t.voteCount} 票 · {t.status}</div>
-              </li>
-            ))}
-          </ul>
-        ) : (
-          <p class="empty">还没有话题，去 /topics 提交一个。</p>
-        )
-      }
-    </section>
-
-    <script>
-      const logout = document.getElementById('logout');
-      if (logout) {
-        logout.addEventListener('click', async (e) => {
-          e.preventDefault();
-          await fetch('/api/auth/logout', { method: 'POST' });
-          location.reload();
-        });
-      }
-    </script>
-  </body>
-</html>
+<style>
+  .feed-grid { display: grid; grid-template-columns: 1fr; gap: var(--space-4); }
+  @media (min-width: 640px) { .feed-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+</style>

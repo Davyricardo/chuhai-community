@@ -1,0 +1,40 @@
+---
+import type { Article } from '../db/schema';
+
+interface Props {
+  article: Article;
+  authorName?: string;
+}
+const { article, authorName = '社区作者' } = Astro.props;
+
+let tags: string[] = [];
+try {
+  tags = typeof article.tags === 'string' ? JSON.parse(article.tags) : (article.tags || []);
+} catch {
+  tags = [];
+}
+if (!Array.isArray(tags)) tags = [];
+
+const dateStr = article.publishedAt ? new Date(article.publishedAt).toISOString().slice(0, 10) : '';
+---
+<article class="card card--interactive" style="display:flex; flex-direction:column; justify-content:space-between; gap:var(--space-3); height:100%;">
+  <div>
+    <div style="display:flex; align-items:center; justify-content:space-between; gap:var(--space-2); margin-bottom:var(--space-2);">
+      <div style="display:flex; gap:var(--space-1); flex-wrap:wrap;">
+        {tags.slice(0, 2).map((tag: string) => <span class="tag">#{tag}</span>)}
+      </div>
+      {article.link && <span class="badge badge--external">↗ 外链</span>}
+    </div>
+    <h3 style="margin:0 0 var(--space-2); font-size:var(--font-size-18); line-height:var(--leading-snug); font-weight:600;">
+      <a href={`/articles/${article.slug}`} style="color:var(--color-text);">{article.title}</a>
+    </h3>
+    <p class="line-clamp-2" style="margin:0; font-size:var(--font-size-14); color:var(--color-text-secondary); line-height:var(--leading-normal);">
+      {article.summary || ''}
+    </p>
+  </div>
+  <footer style="display:flex; align-items:center; gap:var(--space-2); font-size:var(--font-size-13); color:var(--color-text-muted); padding-top:var(--space-2); border-top:1px solid var(--color-border-subtle);">
+    <span>{authorName}</span>
+    <span aria-hidden="true">·</span>
+    <time datetime={dateStr}>{dateStr}</time>
+  </footer>
+</article>
