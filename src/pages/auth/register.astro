@@ -1,74 +1,120 @@
 ---
-const title = '注册 · CHUHAI';
+import BaseLayout from '../../layouts/BaseLayout.astro';
 ---
 
-<!DOCTYPE html>
-<html lang="zh-CN">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>{title}</title>
-    <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
-    <style>
-      body { font-family: system-ui, sans-serif; max-width: 420px; margin: 60px auto; padding: 0 20px; }
-      h1 { font-size: 22px; }
-      input { display: block; width: 100%; padding: 10px; margin: 10px 0; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; }
-      button { padding: 10px 16px; border: 0; border-radius: 8px; background: #2563eb; color: #fff; cursor: pointer; }
-      button:disabled { background: #9ca3af; }
-      .row { display: flex; gap: 8px; align-items: center; }
-      .row input { flex: 1; margin: 0; }
-      #msg { margin-top: 12px; font-size: 14px; color: #b91c1c; }
-      a { color: #2563eb; }
-    </style>
-  </head>
-  <body>
-    <h1>注册</h1>
-    <form id="form">
-      <div class="row">
-        <input name="email" type="email" placeholder="邮箱" required />
-        <button type="button" id="send">发送验证码</button>
-      </div>
-      <input name="code" placeholder="6 位验证码" required />
-      <input name="displayName" placeholder="昵称（可留空）" />
-      <input name="password" type="password" placeholder="密码（可留空，留空则用验证码登录）" />
-      <div class="cf-turnstile" data-sitekey="0x4AAAAAAFa6NXpqnS6MFmGQ" data-theme="light" style="margin: 10px 0"></div>
-      <button type="submit">注册</button>
-    </form>
-    <p id="msg"></p>
-    <p><a href="/auth/login">已有账号？去登录</a></p>
+<BaseLayout title="注册" description="注册出海内容社区：邮箱验证码即可加入">
+  <div class="container-auth" style="margin-block:var(--space-12);">
+    <div class="card">
+      <h1 style="margin:0 0 var(--space-1); font-size:var(--font-size-24); font-weight:700;">注册</h1>
+      <p style="margin:0 0 var(--space-6); font-size:var(--font-size-14); color:var(--color-text-muted);">
+        已有账号？<a href="/auth/login">去登录</a>
+      </p>
 
-    <script>
+      <form id="form" novalidate>
+        <div class="form-field">
+          <label class="form-label" for="email">邮箱</label>
+          <input class="form-input" id="email" name="email" type="email" autocomplete="email" placeholder="you@example.com" required />
+        </div>
+
+        <div class="form-field">
+          <label class="form-label" for="code">邮箱验证码</label>
+          <div style="display:flex; gap:var(--space-2); align-items:flex-start;">
+            <input
+              class="form-input"
+              id="code"
+              name="code"
+              inputmode="numeric"
+              autocomplete="one-time-code"
+              maxlength="6"
+              placeholder="6 位数字"
+              style="flex:1; font-family:var(--font-mono); letter-spacing:0.12em;"
+              required
+            />
+            <button class="btn btn--secondary" type="button" id="send" style="min-width:7.5rem; font-variant-numeric:tabular-nums;">
+              发送验证码
+            </button>
+          </div>
+          <span class="form-hint">验证码 10 分钟内有效，连续输错 5 次需重新获取</span>
+        </div>
+
+        <div class="form-field">
+          <label class="form-label" for="displayName">昵称</label>
+          <input class="form-input" id="displayName" name="displayName" maxlength="24" placeholder="可留空，默认用邮箱前缀" />
+        </div>
+
+        <div class="form-field">
+          <label class="form-label" for="password">密码</label>
+          <input class="form-input" id="password" name="password" type="password" autocomplete="new-password" placeholder="可留空，留空则用验证码登录" />
+        </div>
+
+        <div class="turnstile-slot">
+          <div class="cf-turnstile" data-sitekey="0x4AAAAAAFa6NXpqnS6MFmGQ" data-theme="auto"></div>
+        </div>
+
+        <button class="btn btn--primary" type="submit" style="width:100%;">注册</button>
+      </form>
+
+      <div id="msg" class="alert alert--danger" style="display:none; margin-top:var(--space-4);" role="alert"></div>
+    </div>
+  </div>
+
+  <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer is:inline></script>
+  <script is:inline>
+    (function () {
       const form = document.getElementById('form');
       const msg = document.getElementById('msg');
       const sendBtn = document.getElementById('send');
+      let timer = null;
+
+      function show(text, ok) {
+        msg.textContent = text;
+        msg.className = 'alert ' + (ok ? 'alert--success' : 'alert--danger');
+        msg.style.display = 'flex';
+      }
 
       sendBtn.addEventListener('click', async () => {
         const email = form.email.value.trim();
-        if (!email) return (msg.textContent = '请先填写邮箱');
-        sendBtn.disabled = true;
+        if (!email) return show('请先填写邮箱', false);
+        if (timer) return; // 倒计时进行中
+
+        let res;
+        try {
+          res = await fetch('/api/auth/request-code', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email, purpose: 'register' }),
+          }).then((r) => r.json());
+        } catch {
+          return show('网络异常，请稍后重试', false);
+        }
+
+        if (!res.ok) return show(res.error || '发送失败', false);
+        show('验证码已发送，请查收邮件', true);
+
+        // 发送成功才启动 60 秒倒计时
         let left = 60;
-        sendBtn.textContent = left + 's';
-        const timer = setInterval(() => {
+        sendBtn.disabled = true;
+        sendBtn.textContent = left + 's 后重发';
+        timer = setInterval(() => {
           left -= 1;
-          sendBtn.textContent = left + 's';
+          sendBtn.textContent = left + 's 后重发';
           if (left <= 0) {
             clearInterval(timer);
+            timer = null;
             sendBtn.disabled = false;
             sendBtn.textContent = '重新发送';
           }
         }, 1000);
-
-        const res = await fetch('/api/auth/request-code', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email, purpose: 'register' }),
-        }).then((r) => r.json());
-        msg.textContent = res.ok ? '验证码已发送，请查收邮件' : res.error || '发送失败';
-        msg.style.color = res.ok ? '#15803d' : '#b91c1c';
       });
 
       form.addEventListener('submit', async (e) => {
         e.preventDefault();
+        const btn = form.querySelector('button[type="submit"]');
+        const original = btn.innerHTML;
+        btn.disabled = true;
+        btn.innerHTML = '<span class="btn__spinner"></span>注册中…';
+        msg.style.display = 'none';
+
         const payload = {
           email: form.email.value.trim(),
           code: form.code.value.trim(),
@@ -76,18 +122,25 @@ const title = '注册 · CHUHAI';
           password: form.password.value,
           turnstileToken: document.querySelector('[name="cf-turnstile-response"]')?.value || '',
         };
-        const res = await fetch('/api/auth/register', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload),
-        }).then((r) => r.json());
-        if (res.ok) {
-          location.href = '/';
-        } else {
-          msg.textContent = res.error || '注册失败';
-          msg.style.color = '#b91c1c';
+
+        try {
+          const res = await fetch('/api/auth/register', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload),
+          }).then((r) => r.json());
+          if (res.ok) {
+            location.href = '/';
+          } else {
+            show(res.error || '注册失败', false);
+          }
+        } catch {
+          show('网络异常，请稍后重试', false);
+        } finally {
+          btn.disabled = false;
+          btn.innerHTML = original;
         }
       });
-    </script>
-  </body>
-</html>
+    })();
+  </script>
+</BaseLayout>

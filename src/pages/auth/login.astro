@@ -1,48 +1,67 @@
 ---
-const title = '登录 · CHUHAI';
+import BaseLayout from '../../layouts/BaseLayout.astro';
 ---
 
-<!DOCTYPE html>
-<html lang="zh-CN">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>{title}</title>
-    <style>
-      body { font-family: system-ui, sans-serif; max-width: 420px; margin: 60px auto; padding: 0 20px; }
-      h1 { font-size: 22px; }
-      input { display: block; width: 100%; padding: 10px; margin: 10px 0; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; }
-      button { padding: 10px 16px; border: 0; border-radius: 8px; background: #2563eb; color: #fff; cursor: pointer; }
-      #msg { margin-top: 12px; font-size: 14px; color: #b91c1c; }
-      a { color: #2563eb; }
-    </style>
-  </head>
-  <body>
-    <h1>登录</h1>
-    <form id="form">
-      <input name="email" type="email" placeholder="邮箱" required />
-      <input name="password" type="password" placeholder="密码" required />
-      <button type="submit">登录</button>
-    </form>
-    <p id="msg"></p>
-    <p><a href="/auth/register">还没有账号？去注册</a></p>
+<BaseLayout title="登录" description="登录出海内容社区，参与话题投票与评论">
+  <div class="container-auth" style="margin-block:var(--space-12);">
+    <div class="card">
+      <h1 style="margin:0 0 var(--space-1); font-size:var(--font-size-24); font-weight:700;">登录</h1>
+      <p style="margin:0 0 var(--space-6); font-size:var(--font-size-14); color:var(--color-text-muted);">
+        还没有账号？<a href="/auth/register">去注册</a>
+      </p>
 
-    <script>
-      const form = document.getElementById('form');
-      const msg = document.getElementById('msg');
-      form.addEventListener('submit', async (e) => {
-        e.preventDefault();
+      <form id="form" novalidate>
+        <div class="form-field">
+          <label class="form-label" for="email">邮箱</label>
+          <input class="form-input" id="email" name="email" type="email" autocomplete="email" required />
+        </div>
+        <div class="form-field">
+          <label class="form-label" for="password">密码</label>
+          <input class="form-input" id="password" name="password" type="password" autocomplete="current-password" required />
+        </div>
+        <button class="btn btn--primary" type="submit" style="width:100%;">登录</button>
+      </form>
+
+      <div id="msg" class="alert alert--danger" style="display:none; margin-top:var(--space-4);" role="alert"></div>
+    </div>
+  </div>
+
+  <script>
+    const form = document.getElementById('form') as HTMLFormElement;
+    const msg = document.getElementById('msg')!;
+    const submit = () => form.querySelector('button[type="submit"]') as HTMLButtonElement;
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const btn = submit();
+      const original = btn.innerHTML;
+      btn.disabled = true;
+      btn.innerHTML = '<span class="btn__spinner"></span>登录中…';
+      msg.style.display = 'none';
+
+      try {
         const res = await fetch('/api/auth/login', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email: form.email.value.trim(), password: form.password.value }),
+          body: JSON.stringify({
+            email: (form.email as HTMLInputElement).value.trim(),
+            password: (form.password as HTMLInputElement).value,
+          }),
         }).then((r) => r.json());
+
         if (res.ok) {
           location.href = '/';
         } else {
-          msg.textContent = res.error || '登录失败';
+          msg.textContent = res.error || '登录失败，请重试';
+          msg.style.display = 'flex';
         }
-      });
-    </script>
-  </body>
-</html>
+      } catch {
+        msg.textContent = '网络异常，请稍后重试';
+        msg.style.display = 'flex';
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = original;
+      }
+    });
+  </script>
+</BaseLayout>
