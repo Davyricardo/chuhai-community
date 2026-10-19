@@ -1,0 +1,51 @@
+---
+import '../styles/tokens.css';
+import Navbar from '../components/Navbar.astro';
+import Footer from '../components/Footer.astro';
+import type { User } from '../db/schema';
+
+interface Props {
+  title: string;
+  description?: string;
+}
+
+const {
+  title,
+  description = '面向 AI 产品出海与独立开发者的中文实战内容、工具推荐与话题共创社区',
+} = Astro.props;
+const user: User | null = Astro.locals.user ?? null;
+---
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{title} · 出海内容社区</title>
+    <meta name="description" content={description} />
+    <script is:inline>
+      (function () {
+        try {
+          var saved = localStorage.getItem('chuhai-theme');
+          var sysDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+          var theme = saved === 'dark' || saved === 'light' ? saved : (sysDark ? 'dark' : 'light');
+          document.documentElement.setAttribute('data-theme', theme);
+        } catch (e) {}
+      })();
+    </script>
+  </head>
+  <body>
+    <Navbar user={user} currentPath={Astro.url.pathname} />
+    <main id="main-content">
+      <slot />
+    </main>
+    <Footer />
+    <script is:inline>
+      document.getElementById('theme-toggle')?.addEventListener('click', function () {
+        var root = document.documentElement;
+        var next = root.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+        root.setAttribute('data-theme', next);
+        try { localStorage.setItem('chuhai-theme', next); } catch (e) {}
+      });
+    </script>
+  </body>
+</html>

@@ -1,0 +1,63 @@
+---
+import type { User } from '../db/schema';
+
+interface Props {
+  user?: User | null;
+  currentPath?: string;
+}
+const { user = null, currentPath = '/' } = Astro.props;
+const links = [
+  { href: '/', label: '首页', match: (p: string) => p === '/' },
+  { href: '/articles', label: '文章', match: (p: string) => p.startsWith('/articles') },
+  { href: '/topics', label: '话题投票', match: (p: string) => p.startsWith('/topics') },
+  { href: '/tools', label: '出海工具', match: (p: string) => p.startsWith('/tools') },
+];
+---
+<header
+  class="card"
+  style="position:sticky; top:0; z-index:var(--z-sticky); border-radius:0; border-inline:none; border-top:none; backdrop-filter:blur(12px); background-color:var(--color-surface-glass); padding-block:var(--space-3);"
+>
+  <div class="container" style="display:flex; align-items:center; justify-content:space-between; gap:var(--space-4);">
+    <div style="display:flex; align-items:center; gap:var(--space-5); min-width:0;">
+      <a href="/" style="display:inline-flex; align-items:center; gap:var(--space-2); font-size:var(--font-size-18); font-weight:700; color:var(--color-text);">
+        <span aria-hidden="true">🌊</span><span>出海社区</span>
+      </a>
+      <nav class="hide-mobile" style="display:flex; gap:var(--space-2);" aria-label="主导航">
+        {
+          links.map((l) => (
+            <a href={l.href} class="tag" style={l.match(currentPath) ? 'background-color:var(--color-primary-subtle); color:var(--color-primary-text); border-color:var(--color-primary-border); font-weight:600;' : ''}>
+              {l.label}
+            </a>
+          ))
+        }
+      </nav>
+    </div>
+
+    <div style="display:flex; align-items:center; gap:var(--space-3); flex-shrink:0;">
+      <a href="/search" class="btn btn--ghost" aria-label="全站搜索" style="padding-inline:var(--space-2);">🔍</a>
+      <button type="button" id="theme-toggle" class="btn btn--ghost" aria-label="切换深浅色主题" style="padding-inline:var(--space-2);">🌓</button>
+      {
+        user ? (
+          <div style="display:flex; align-items:center; gap:var(--space-3);">
+            {user.role === 'admin' && <a href="/admin" class="badge badge--open">后台</a>}
+            <span style="font-size:var(--font-size-13); color:var(--color-text-secondary);">{user.displayName}</span>
+            <form action="/api/auth/logout" method="POST" style="display:inline; margin:0;">
+              <button type="submit" class="btn btn--ghost" style="padding-inline:var(--space-2); font-size:var(--font-size-13);">退出</button>
+            </form>
+          </div>
+        ) : (
+          <div style="display:flex; gap:var(--space-2);">
+            <a href="/auth/login" class="btn btn--ghost">登录</a>
+            <a href="/auth/register" class="btn btn--primary">注册</a>
+          </div>
+        )
+      }
+    </div>
+  </div>
+</header>
+
+<style>
+  @media (max-width: 767px) {
+    .hide-mobile { display: none !important; }
+  }
+</style>
