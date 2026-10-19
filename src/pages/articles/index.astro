@@ -1,4 +1,4 @@
-import { desc, eq, like, or } from 'drizzle-orm';
+import { and, desc, eq, like, or } from 'drizzle-orm';
 import { getDB } from '../../db';
 import { articles } from '../../db/schema';
 import { getSessionUser, sessionCookieName } from '../../lib/auth';
@@ -7,13 +7,24 @@ const db = getDB();
 const user = await getSessionUser(db, Astro.cookies.get(sessionCookieName())?.value);
 const q = (Astro.url.searchParams.get('q') || '').trim();
 
-const base = db.select().from(articles).where(eq(articles.published, 1));
 const list = q
-  ? await base
-      .where(or(like(articles.title, `%${q}%`), like(articles.summary, `%${q}%`), like(articles.tags, `%${q}%`)))
+  ? await db
+      .select()
+      .from(articles)
+      .where(
+        and(
+          eq(articles.published, 1),
+          or(like(articles.title, `%${q}%`), like(articles.summary, `%${q}%`), like(articles.tags, `%${q}%`)),
+        ),
+      )
       .orderBy(desc(articles.publishedAt))
       .limit(50)
-  : await base.orderBy(desc(articles.publishedAt)).limit(50);
+  : await db
+      .select()
+      .from(articles)
+      .where(eq(articles.published, 1))
+      .orderBy(desc(articles.publishedAt))
+      .limit(50);
 ---
 
 <!DOCTYPE html>
