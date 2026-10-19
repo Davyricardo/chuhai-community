@@ -9,6 +9,7 @@ import {
   isFirstUser,
   sessionCookieName,
 } from '../../../lib/auth';
+import { checkRate, clientIp } from '../../../lib/ratelimit';
 
 export const POST: APIRoute = async ({ request, locals }) => {
   const body = await request.json().catch(() => ({}));
@@ -22,6 +23,13 @@ export const POST: APIRoute = async ({ request, locals }) => {
   }
 
   const db = getDB();
+
+  // 限流：同一 IP 每小时最多 5 次注册尝试
+  const ip = clientIp(request);
+  const regLimit = await checkRate(db, `register:ip:${ip}`, 5, 3600_000);
+  if (!regLimit.ok) {
+    return json({ ok: false, error: '注册过于频繁，请稍后再试' }, 429);
+  }
 
   if (await findUserByEmail(db, email)) {
     return json({ ok: false, error: '该邮箱已注册' }, 409);

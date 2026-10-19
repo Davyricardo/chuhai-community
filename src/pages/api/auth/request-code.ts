@@ -2,6 +2,14 @@ import type { APIRoute } from 'astro';
 import { getDB } from '../../../db';
 import { issueEmailCode } from '../../../lib/auth';
 import { sendCodeEmail } from '../../../lib/mail';
+import { checkRate, clientIp } from '../../../lib/ratelimit';
+
+function json(data: unknown, status = 200) {
+  return new Response(JSON.stringify(data), {
+    status,
+    headers: { 'Content-Type': 'application/json' },
+  });
+}
 
 export const POST: APIRoute = async ({ request, locals }) => {
   let email = '';
@@ -26,6 +34,18 @@ export const POST: APIRoute = async ({ request, locals }) => {
   }
 
   const db = getDB();
+
+  // 限流：同一 IP 每小时最多 10 次，同一邮箱每 10 分钟最多 3 次
+  const ip = clientIp(request);
+  const ipLimit = await checkRate(db, `code:ip:${ip}`, 10, 3600_000);
+  if (!ipLimit.ok) {
+    return json({ ok: false, error: `请求过于频繁，请 ${ipLimit.retryAfter} 秒后再试` }, 429);
+  }
+  const emailLimit = await checkRate(db, `code:email:${email.toLowerCase()}`, 3, 600_000);
+  if (!emailLimit.ok) {
+    return json({ ok: false, error: '该邮箱请求过于频繁，请稍后再试' }, 429);
+  }
+
   const code = await issueEmailCode(db, email, purpose);
   const sent = await sendCodeEmail(email, code);
 

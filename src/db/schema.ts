@@ -131,6 +131,13 @@ export const likes = sqliteTable(
   (t) => [uniqueIndex('likes_uniq').on(t.targetType, t.targetId, t.userId)],
 );
 
+/** 速率限制：固定窗口计数 */
+export const rateLimits = sqliteTable('rate_limits', {
+  key: text('key').primaryKey(),
+  count: integer('count').notNull().default(0),
+  windowStart: integer('window_start').notNull(),
+});
+
 export type User = typeof users.$inferSelect;
 export type Article = typeof articles.$inferSelect;
 export type Topic = typeof topics.$inferSelect;
