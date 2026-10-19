@@ -1,0 +1,116 @@
+---
+import { and, desc, eq, like, or } from 'drizzle-orm';
+import { getDB } from '../db';
+import { articles, topics } from '../db/schema';
+import { getSessionUser, sessionCookieName } from '../lib/auth';
+
+const db = getDB();
+const user = await getSessionUser(db, Astro.cookies.get(sessionCookieName())?.value);
+const q = (Astro.url.searchParams.get('q') || '').trim();
+
+let articleHits: any[] = [];
+let topicHits: any[] = [];
+
+if (q) {
+  const kw = `%${q}%`;
+  articleHits = await db
+    .select()
+    .from(articles)
+    .where(
+      and(
+        eq(articles.published, 1),
+        or(like(articles.title, kw), like(articles.summary, kw), like(articles.content, kw), like(articles.tags, kw)),
+      ),
+    )
+    .orderBy(desc(articles.publishedAt))
+    .limit(30);
+
+  topicHits = await db
+    .select()
+    .from(topics)
+    .where(or(like(topics.title, kw), like(topics.description, kw)))
+    .orderBy(desc(topics.voteCount))
+    .limit(30);
+}
+
+const total = articleHits.length + topicHits.length;
+---
+
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{q ? `搜索 ${q}` : '搜索'} · CHUHAI</title>
+    <style>
+      body { font-family: system-ui, sans-serif; max-width: 760px; margin: 0 auto; padding: 0 20px 60px; }
+      header { display: flex; align-items: center; justify-content: space-between; padding: 16px 0; border-bottom: 1px solid #eee; }
+      nav a { margin-left: 14px; color: #374151; text-decoration: none; font-size: 14px; }
+      h1 { font-size: 24px; margin: 28px 0 16px; }
+      form.s { display: flex; gap: 8px; margin-bottom: 8px; }
+      form.s input { flex: 1; padding: 11px; border: 1px solid #ddd; border-radius: 8px; font-size: 15px; }
+      form.s button { padding: 11px 20px; border: 0; border-radius: 8px; background: #2563eb; color: #fff; cursor: pointer; }
+      .hint { color: #9ca3af; font-size: 13px; margin: 6px 0 20px; }
+      h2 { font-size: 16px; margin: 28px 0 8px; color: #374151; }
+      ul { list-style: none; padding: 0; }
+      li { padding: 12px 0; border-bottom: 1px solid #f3f4f6; }
+      li a { color: #111827; text-decoration: none; font-weight: 500; }
+      li a:hover { color: #2563eb; }
+      .meta { color: #9ca3af; font-size: 12px; margin-top: 3px; }
+      .empty { color: #9ca3af; }
+    </style>
+  </head>
+  <body>
+    <header>
+      <a href="/" style="font-weight: 700; text-decoration: none; color: #111">CHUHAI</a>
+      <nav>
+        <a href="/articles">文章</a>
+        <a href="/topics">话题</a>
+        <a href="/search">搜索</a>
+        {user ? <a href="/admin">后台</a> : <a href="/auth/login">登录</a>}
+      </nav>
+    </header>
+
+    <h1>全站搜索</h1>
+    <form class="s" method="get">
+      <input name="q" value={q} placeholder="输入关键词，搜索文章和话题" autofocus />
+      <button type="submit">搜索</button>
+    </form>
+
+    {q ? <p class="hint">「{q}」共 {total} 条结果</p> : <p class="hint">输入关键词开始搜索。</p>}
+
+    {
+      articleHits.length ? (
+        <>
+          <h2>文章（{articleHits.length}）</h2>
+          <ul>
+            {articleHits.map((a) => (
+              <li>
+                <a href={`/articles/${a.slug}`}>{a.title}</a>
+                {a.summary ? <div class="meta">{a.summary}</div> : null}
+              </li>
+            ))}
+          </ul>
+        </>
+      ) : null
+    }
+
+    {
+      topicHits.length ? (
+        <>
+          <h2>话题（{topicHits.length}）</h2>
+          <ul>
+            {topicHits.map((t) => (
+              <li>
+                <a href="/topics">{t.title}</a>
+                <div class="meta">{t.voteCount} 票</div>
+              </li>
+            ))}
+          </ul>
+        </>
+      ) : null
+    }
+
+    {q && !total ? <p class="empty">没有找到相关内容。</p> : null}
+  </body>
+</html>
