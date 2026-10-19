@@ -1,0 +1,42 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+
+const user = Astro.locals.user ?? null;
+---
+
+<BaseLayout title="退出登录" description="退出出海内容社区登录">
+  <div class="container-auth" style="margin-block:var(--space-12);">
+    <div class="card">
+      {
+        user ? (
+          <>
+            <h1 style="margin:0 0 var(--space-2); font-size:var(--font-size-24); font-weight:800;">退出登录</h1>
+            <p style="margin:0 0 var(--space-5); font-size:var(--font-size-14); color:var(--color-text-muted); line-height:var(--leading-normal);">
+              当前登录账号：<strong style="color:var(--color-text);">{user.displayName}</strong>（{user.email}）
+            </p>
+
+            <div class="alert alert--info" style="margin-bottom:var(--space-5);">
+              退出后需要重新用邮箱验证码或密码登录才能评论、提交话题和投票。
+            </div>
+
+            <form method="POST" action="/api/auth/logout" style="display:flex; flex-direction:column; gap:var(--space-3);">
+              <button class="btn btn--primary" type="submit" style="width:100%;">确认退出</button>
+              <a class="btn btn--secondary" href="/" style="width:100%;">取消，返回首页</a>
+            </form>
+          </>
+        ) : (
+          <>
+            <h1 style="margin:0 0 var(--space-2); font-size:var(--font-size-24); font-weight:800;">你还没有登录</h1>
+            <p style="margin:0 0 var(--space-5); font-size:var(--font-size-14); color:var(--color-text-muted); line-height:var(--leading-normal);">
+              没有需要退出的登录状态。
+            </p>
+            <div style="display:flex; flex-direction:column; gap:var(--space-3);">
+              <a class="btn btn--primary" href="/auth/login" style="width:100%;">去登录</a>
+              <a class="btn btn--secondary" href="/" style="width:100%;">返回首页</a>
+            </div>
+          </>
+        )
+      }
+    </div>
+  </div>
+</BaseLayout>

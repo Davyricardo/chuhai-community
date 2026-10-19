@@ -55,9 +55,7 @@ const links = [
           <div style="display:flex; align-items:center; gap:var(--space-3);">
             {user.role === 'admin' && <a href="/admin" class="badge badge--open">后台</a>}
             <span style="font-size:var(--font-size-13); color:var(--color-text-secondary);">{user.displayName}</span>
-            <form action="/api/auth/logout" method="POST" style="display:inline; margin:0;">
-              <button type="submit" class="btn btn--ghost" style="padding-inline:var(--space-2); font-size:var(--font-size-13);">退出</button>
-            </form>
+            <a href="/auth/logout" class="btn btn--ghost" style="padding-inline:var(--space-2); font-size:var(--font-size-13);">退出</a>
           </div>
         ) : (
           <div style="display:flex; gap:var(--space-2);">
