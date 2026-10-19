@@ -20,7 +20,8 @@ const links = [
   <div class="container" style="display:flex; align-items:center; justify-content:space-between; gap:var(--space-4);">
     <div style="display:flex; align-items:center; gap:var(--space-5); min-width:0;">
       <a href="/" style="display:inline-flex; align-items:center; gap:var(--space-2); font-size:var(--font-size-18); font-weight:700; color:var(--color-text);">
-        <span aria-hidden="true">🌊</span><span>出海社区</span>
+        <span style="display:inline-flex; align-items:center; justify-content:center; width:1.75rem; height:1.75rem; border-radius:var(--radius-md); background:var(--gradient-brand-text); color:#fff; font-size:var(--font-size-13); font-weight:800; flex-shrink:0;" aria-hidden="true">出</span>
+        <span>出海社区</span>
       </a>
       <nav class="hide-mobile" style="display:flex; gap:var(--space-2);" aria-label="主导航">
         {
@@ -34,8 +35,21 @@ const links = [
     </div>
 
     <div style="display:flex; align-items:center; gap:var(--space-3); flex-shrink:0;">
-      <a href="/search" class="btn btn--ghost" aria-label="全站搜索" style="padding-inline:var(--space-2);">🔍</a>
-      <button type="button" id="theme-toggle" class="btn btn--ghost" aria-label="切换深浅色主题" style="padding-inline:var(--space-2);">🌓</button>
+      <a href="/search" class="btn btn--ghost btn--icon" aria-label="全站搜索">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <circle cx="11" cy="11" r="7"></circle>
+          <path d="m20 20-3.5-3.5"></path>
+        </svg>
+      </a>
+      <button type="button" id="theme-toggle" class="btn btn--ghost btn--icon" aria-label="切换深浅色主题">
+        <svg class="icon-sun" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <circle cx="12" cy="12" r="4"></circle>
+          <path d="M12 2v2M12 20v2M2 12h2M20 12h2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"></path>
+        </svg>
+        <svg class="icon-moon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"></path>
+        </svg>
+      </button>
       {
         user ? (
           <div style="display:flex; align-items:center; gap:var(--space-3);">
@@ -59,5 +73,14 @@ const links = [
 <style>
   @media (max-width: 767px) {
     .hide-mobile { display: none !important; }
+  }
+  .btn--icon { padding-inline: var(--space-2); }
+  /* 浅色显示月亮（点击切到深色），深色显示太阳 */
+  .icon-moon { display: none; }
+  :root[data-theme="dark"] .icon-sun { display: none; }
+  :root[data-theme="dark"] .icon-moon { display: block; }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) .icon-sun { display: none; }
+    :root:not([data-theme="light"]) .icon-moon { display: block; }
   }
 </style>
