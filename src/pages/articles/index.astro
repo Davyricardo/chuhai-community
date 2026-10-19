@@ -1,3 +1,4 @@
+---
 import { and, desc, eq, like, or } from 'drizzle-orm';
 import { getDB } from '../../db';
 import { articles } from '../../db/schema';
@@ -7,24 +8,30 @@ const db = getDB();
 const user = await getSessionUser(db, Astro.cookies.get(sessionCookieName())?.value);
 const q = (Astro.url.searchParams.get('q') || '').trim();
 
-const list = q
-  ? await db
-      .select()
-      .from(articles)
-      .where(
-        and(
-          eq(articles.published, 1),
-          or(like(articles.title, `%${q}%`), like(articles.summary, `%${q}%`), like(articles.tags, `%${q}%`)),
-        ),
-      )
-      .orderBy(desc(articles.publishedAt))
-      .limit(50)
-  : await db
-      .select()
-      .from(articles)
-      .where(eq(articles.published, 1))
-      .orderBy(desc(articles.publishedAt))
-      .limit(50);
+let list: any[] = [];
+try {
+  list = q
+    ? await db
+        .select()
+        .from(articles)
+        .where(
+          and(
+            eq(articles.published, 1),
+            or(like(articles.title, `%${q}%`), like(articles.summary, `%${q}%`), like(articles.tags, `%${q}%`)),
+          ),
+        )
+        .orderBy(desc(articles.publishedAt))
+        .limit(50)
+    : await db
+        .select()
+        .from(articles)
+        .where(eq(articles.published, 1))
+        .orderBy(desc(articles.publishedAt))
+        .limit(50);
+} catch (e) {
+  console.error('QUERY_ERROR', (e as Error)?.message, (e as Error)?.stack);
+  Astro.response.status = 500;
+}
 ---
 
 <!DOCTYPE html>
