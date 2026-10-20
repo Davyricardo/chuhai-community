@@ -7,6 +7,9 @@ import ArticleCard from '../../components/ArticleCard.astro';
 
 const db = getDB();
 const q = (Astro.url.searchParams.get('q') || '').trim();
+// D1/SQLite 的 LIKE 模式上限为 50 字符（超出报 SQLITE_ERROR 7500 "pattern too complex"）。
+// 模式是 `%${q}%`，故 q 最多保留 48 字符，避免超长查询把页面打成 500。
+const qDb = q.slice(0, 48);
 
 let list: any[] = [];
 try {
@@ -17,7 +20,7 @@ try {
         .where(
           and(
             eq(articles.published, 1),
-            or(like(articles.title, `%${q}%`), like(articles.summary, `%${q}%`), like(articles.tags, `%${q}%`)),
+            or(like(articles.title, `%${qDb}%`), like(articles.summary, `%${qDb}%`), like(articles.tags, `%${qDb}%`)),
           ),
         )
         .orderBy(desc(articles.publishedAt))

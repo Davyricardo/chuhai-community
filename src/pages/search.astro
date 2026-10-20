@@ -6,30 +6,37 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 
 const db = getDB();
 const q = (Astro.url.searchParams.get('q') || '').trim();
+// D1/SQLite 的 LIKE 模式上限为 50 字符（超出报 SQLITE_ERROR 7500 "pattern too complex"）。
+// 模式是 `%${q}%`，故 q 最多保留 48 字符；再包一层 try/catch，任何查询异常都静默降级为空结果而非 500。
+const qDb = q.slice(0, 48);
 
 let articleHits: any[] = [];
 let topicHits: any[] = [];
 
-if (q) {
-  const kw = `%${q}%`;
-  articleHits = await db
-    .select()
-    .from(articles)
-    .where(
-      and(
-        eq(articles.published, 1),
-        or(like(articles.title, kw), like(articles.summary, kw), like(articles.content, kw), like(articles.tags, kw)),
-      ),
-    )
-    .orderBy(desc(articles.publishedAt))
-    .limit(30);
+if (qDb) {
+  const kw = `%${qDb}%`;
+  try {
+    articleHits = await db
+      .select()
+      .from(articles)
+      .where(
+        and(
+          eq(articles.published, 1),
+          or(like(articles.title, kw), like(articles.summary, kw), like(articles.content, kw), like(articles.tags, kw)),
+        ),
+      )
+      .orderBy(desc(articles.publishedAt))
+      .limit(30);
 
-  topicHits = await db
-    .select()
-    .from(topics)
-    .where(or(like(topics.title, kw), like(topics.description, kw)))
-    .orderBy(desc(topics.voteCount))
-    .limit(30);
+    topicHits = await db
+      .select()
+      .from(topics)
+      .where(or(like(topics.title, kw), like(topics.description, kw)))
+      .orderBy(desc(topics.voteCount))
+      .limit(30);
+  } catch (e) {
+    console.error('SEARCH_QUERY_ERROR', (e as Error)?.message, (e as Error)?.stack);
+  }
 }
 
 const total = articleHits.length + topicHits.length;
