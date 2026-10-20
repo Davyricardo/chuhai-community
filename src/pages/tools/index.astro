@@ -37,38 +37,142 @@ const categories = [...tagSet.entries()].sort((a, b) => b[1] - a[1]).slice(0, 10
 const list = active ? all.filter((a) => (a.tags || '').includes(active)) : all;
 ---
 
-<BaseLayout title="工具推荐" description="AI 与云服务常用工具整理：模型、部署、存储、监控">
-  <div class="container" style="padding-block:var(--space-8);">
-    <h1 style="margin:0 0 var(--space-2); font-size:var(--font-size-24); font-weight:800;">工具推荐</h1>
-    <p style="margin:0 0 var(--space-6); font-size:var(--font-size-14); color:var(--color-text-muted); max-width:var(--container-reading);">
-      AI 与云服务常用工具整理：模型与 API、部署与容器、存储与 CDN、监控与告警。后台发布文章时把标签写成「工具」即可收录到这里。
-    </p>
+<BaseLayout title="云工具导航" description="AI 与云服务精选工具整理：模型、部署、存储、监控与开发者利器">
+  <div class="container tools-page-container">
+    <header class="tools-header animate-in">
+      <div class="tools-badge">
+        <span>⚡ 效能利器库</span>
+      </div>
 
-    {
-      categories.length > 0 && (
-        <nav aria-label="工具分类" style="display:flex; flex-wrap:wrap; gap:var(--space-2); margin-bottom:var(--space-6);">
-          <a href="/tools" class="tag" style={!active ? 'background-color:var(--color-primary-subtle); color:var(--color-primary-text); border-color:var(--color-primary-border); font-weight:600;' : ''}>
-            全部 <span style="color:var(--color-text-muted); margin-left:var(--space-1);">{all.length}</span>
-          </a>
-          {categories.map(([tag, count]) => (
-            <a href={`/tools?tag=${encodeURIComponent(tag)}`} class="tag" style={active === tag ? 'background-color:var(--color-primary-subtle); color:var(--color-primary-text); border-color:var(--color-primary-border); font-weight:600;' : ''}>
-              {tag} <span style="color:var(--color-text-muted); margin-left:var(--space-1);">{count}</span>
+      <h1 class="tools-title">
+        AI 与云原生精选工具箱
+      </h1>
+
+      <p class="tools-desc">
+        模型推理 API、边缘运行时、轻量化存储与全栈可观测性——经过实操验证的精选工具库与横向横评。
+      </p>
+
+      {
+        categories.length > 0 && (
+          <nav aria-label="工具分类" class="tools-filter-nav">
+            <a href="/tools" class={`tab-pill ${!active ? 'tab-pill--active' : ''}`}>
+              全部工具 ({all.length})
             </a>
-          ))}
-        </nav>
-      )
-    }
+            {categories.map(([tag, count]) => (
+              <a href={`/tools?tag=${encodeURIComponent(tag)}`} class={`tab-pill ${active === tag ? 'tab-pill--active' : ''}`}>
+                #{tag} <span class="tab-count">{count}</span>
+              </a>
+            ))}
+          </nav>
+        )
+      }
+    </header>
 
     {
       list.length ? (
-        <div class="grid-cards-3">
+        <div class="grid-cards-3 stagger">
           {list.map((a) => <ArticleCard article={a} />)}
         </div>
       ) : (
-        <div class="card" style="text-align:center; color:var(--color-text-muted); font-size:var(--font-size-14); padding-block:var(--space-8);">
-          {active ? `「${active}」分类下暂无工具` : '还没有工具类文章。去后台发布一篇，标签写「工具」。'}
+        <div class="glass-card empty-tools-card">
+          <div class="empty-icon">🛠️</div>
+          <p class="empty-title">{active ? `「${active}」分类下暂无收录工具` : '工具箱正在筹备充实中'}</p>
+          <p class="empty-sub">后台发布文章并打上「工具」标签，将自动在此呈现。</p>
         </div>
       )
     }
   </div>
 </BaseLayout>
+
+<style>
+  .tools-page-container {
+    padding-top: var(--space-8);
+    padding-bottom: var(--space-16);
+  }
+  .tools-header {
+    text-align: center;
+    margin-bottom: var(--space-10);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  .tools-badge {
+    display: inline-flex;
+    padding: 4px 14px;
+    border-radius: var(--radius-full);
+    background: var(--glass-bg-subtle);
+    border: 1px solid var(--glass-border);
+    font-size: var(--font-size-12);
+    font-weight: 500;
+    color: var(--color-primary-text);
+    margin-bottom: var(--space-3);
+  }
+  .tools-title {
+    margin: 0 0 var(--space-2);
+    font-size: var(--font-size-28);
+    font-weight: 800;
+    letter-spacing: -0.025em;
+    background: var(--gradient-brand-text);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+  .tools-desc {
+    margin: 0 0 var(--space-6);
+    font-size: var(--font-size-14);
+    color: var(--color-text-secondary);
+    max-width: 36rem;
+  }
+  .tools-filter-nav {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: var(--space-2);
+  }
+  .tab-pill {
+    padding: 6px 16px;
+    font-size: var(--font-size-13);
+    font-weight: 500;
+    color: var(--color-text-secondary);
+    background: var(--glass-bg-subtle);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-full);
+    transition: all var(--duration-fast);
+  }
+  .tab-pill:hover {
+    color: var(--color-text);
+    background: var(--color-surface-active);
+  }
+  .tab-pill--active {
+    background: var(--color-primary) !important;
+    color: #ffffff !important;
+    border-color: var(--color-primary) !important;
+    font-weight: 600;
+    box-shadow: 0 4px 12px rgba(0, 113, 227, 0.3);
+  }
+  .tab-count {
+    opacity: 0.8;
+    margin-left: 2px;
+  }
+
+  .empty-tools-card {
+    padding: var(--space-12) var(--space-6);
+    text-align: center;
+    max-width: 30rem;
+    margin: var(--space-8) auto 0;
+  }
+  .empty-icon {
+    font-size: 2rem;
+    margin-bottom: var(--space-3);
+  }
+  .empty-title {
+    margin: 0 0 var(--space-2);
+    font-size: var(--font-size-16);
+    font-weight: 700;
+  }
+  .empty-sub {
+    margin: 0;
+    font-size: var(--font-size-14);
+    color: var(--color-text-muted);
+  }
+</style>

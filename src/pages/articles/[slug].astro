@@ -22,65 +22,122 @@ try {
   tags = [];
 }
 if (!Array.isArray(tags)) tags = [];
+
+// 阅读时长估算
+const contentLen = (article.content || article.summary || '').length;
+const readTime = Math.max(1, Math.round(contentLen / 350));
 ---
 
 <BaseLayout title={article.title} description={article.summary || article.title}>
-  <article class="container-reading" style="padding-block:var(--space-8);">
-    <a href="/articles" style="font-size:var(--font-size-13); color:var(--color-text-muted);">← 返回文章列表</a>
+  <article class="container-reading article-read-container">
+    <!-- 顶部返回 -->
+    <div class="back-nav-bar animate-in">
+      <a href="/articles" class="back-link">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="m15 18-6-6 6-6"></path>
+        </svg>
+        <span>返回文章列表</span>
+      </a>
+    </div>
 
-    <header style="margin-top:var(--space-4);">
-      <h1 style="margin:0 0 var(--space-3); font-size:var(--font-size-30); line-height:var(--leading-tight); font-weight:800;">{article.title}</h1>
-      <div style="display:flex; flex-wrap:wrap; align-items:center; gap:var(--space-2); font-size:var(--font-size-13); color:var(--color-text-muted);">
-        <time datetime={dateStr}>{dateStr}</time>
+    <!-- 文章标题头部 -->
+    <header class="article-header animate-in">
+      <div class="article-tags-wrap">
         {tags.map((t: string) => <a href={`/articles?q=${encodeURIComponent(t)}`} class="tag">#{t}</a>)}
+      </div>
+
+      <h1 class="article-title">{article.title}</h1>
+
+      <div class="article-meta-bar">
+        <div class="author-badge">
+          <div class="author-avatar-dot" aria-hidden="true"></div>
+          <span class="author-name">社区作者</span>
+        </div>
+        <span class="meta-separator" aria-hidden="true">·</span>
+        <time datetime={dateStr} class="meta-item">{dateStr}</time>
+        <span class="meta-separator" aria-hidden="true">·</span>
+        <span class="meta-item">预计 {readTime} 分钟阅读 ({contentLen} 字)</span>
       </div>
     </header>
 
+    <!-- 原文外链提示 -->
     {
       article.link && (
-        <div class="alert alert--info" style="margin-top:var(--space-5);">
-          <div style="flex:1;">
-            本文包含外部原文链接，点击前往原站点阅读完整内容。
+        <div class="glass-card liquid-glow external-link-card animate-in">
+          <div class="external-content">
+            <span class="external-icon">🌐</span>
+            <div>
+              <div class="external-title">包含外部站源全文</div>
+              <div class="external-sub">本文已获得收录或由社区推荐，点击前往原始站点查看完整排版与交互</div>
+            </div>
           </div>
-          <a class="btn btn--secondary" href={article.link} target="_blank" rel="noopener noreferrer" style="flex-shrink:0;">
+          <a class="btn btn--primary external-btn" href={article.link} target="_blank" rel="noopener noreferrer">
             阅读原文 ↗
           </a>
         </div>
       )
     }
 
+    <!-- 正文内容 -->
     {
       article.content ? (
-        <div class="prose-cjk" style="margin-top:var(--space-6); white-space:pre-wrap;">
-          {article.content}
+        <div class="glass-card article-content-card animate-in">
+          <div class="prose-cjk article-body">
+            {article.content}
+          </div>
         </div>
       ) : null
     }
 
+    <!-- 博客 × 论坛 结合与反向发酵机制 -->
+    <section class="glass-card liquid-glow community-feedback-card animate-in">
+      <div class="feedback-left">
+        <div class="feedback-icon">💡</div>
+        <div>
+          <h2 class="feedback-title">有延伸疑问或实操踩坑？</h2>
+          <p class="feedback-desc">
+            阅读完本文后如有复现困惑、版本迭代疑问或希望看到延伸案例，欢迎前往话题社区发起讨论，高票提议将由作者排期追加解答。
+          </p>
+        </div>
+      </div>
+      <a href="/topics" class="btn btn--secondary feedback-btn">
+        去论坛发起探讨 →
+      </a>
+    </section>
+
     <!-- 评论区 -->
-    <section id="comments" style="margin-top:var(--space-12); padding-top:var(--space-6); border-top:1px solid var(--color-border);">
-      <h2 style="margin:0 0 var(--space-5); font-size:var(--font-size-18); font-weight:700;">评论</h2>
-      <div id="clist" style="font-size:var(--font-size-14); color:var(--color-text-secondary);">加载中…</div>
+    <section id="comments" class="comments-section animate-in">
+      <div class="comments-header">
+        <h2 class="comments-title">读者讨论与评论</h2>
+        <span class="comments-subtitle">友善交流，共同精进</span>
+      </div>
+
+      <div id="clist" class="comment-list-box">
+        <div class="comment-loading">正在拉取最新讨论...</div>
+      </div>
 
       {
         user ? (
-          <form id="cform" style="margin-top:var(--space-6);">
+          <form id="cform" class="glass-card comment-form-card">
             <div class="form-field">
-              <label class="form-label" for="cinput">说点什么…</label>
-              <textarea class="form-textarea" id="cinput" maxlength="1000" placeholder="友善发言，理性讨论"></textarea>
+              <label class="form-label" for="cinput">撰写你的看法与补充</label>
+              <textarea class="form-textarea" id="cinput" maxlength="1000" placeholder="分享你的实践经验、补充观点或指出文中的疏漏..."></textarea>
             </div>
             <div class="turnstile-slot">
               <div class="cf-turnstile" data-sitekey="0x4AAAAAAFa6NXpqnS6MFmGQ" data-theme="auto"></div>
             </div>
-            <div style="display:flex; align-items:center; gap:var(--space-3);">
-              <button class="btn btn--primary" type="submit">发表评论</button>
-              <span id="cmsg" style="font-size:var(--font-size-13); color:var(--color-danger);"></span>
+            <div class="form-submit-row">
+              <button class="btn btn--primary" type="submit">发表公开评论</button>
+              <span id="cmsg" class="comment-error-msg"></span>
             </div>
           </form>
         ) : (
-          <p style="font-size:var(--font-size-14); color:var(--color-text-muted);">
-            <a href="/auth/login">登录</a> 后可以评论。
-          </p>
+          <div class="glass-card comment-login-prompt">
+            <span>参与讨论需验证身份：</span>
+            <a href="/auth/login" class="prompt-link">登录</a>
+            <span>或</span>
+            <a href="/auth/register" class="prompt-link">注册</a>
+          </div>
         )
       }
     </section>
@@ -88,6 +145,18 @@ if (!Array.isArray(tags)) tags = [];
 
   <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer is:inline></script>
   <script define:vars={{ articleId: article.id }}>
+    // 监听滚动控制顶部阅读进度条
+    const progressBar = document.getElementById('reading-progress');
+    if (progressBar) {
+      progressBar.style.display = 'block';
+      window.addEventListener('scroll', () => {
+        const totalHeight = document.documentElement.scrollHeight - window.innerHeight;
+        const progress = totalHeight > 0 ? (window.scrollY / totalHeight) * 100 : 0;
+        progressBar.style.width = Math.min(100, Math.max(0, progress)) + '%';
+      }, { passive: true });
+    }
+
+    // 评论拉取与渲染
     const listEl = document.getElementById('clist');
     const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 
@@ -96,23 +165,23 @@ if (!Array.isArray(tags)) tags = [];
         const res = await fetch(`/api/comments?targetType=article&targetId=${encodeURIComponent(articleId)}`).then((r) => r.json());
         const items = res.comments || [];
         if (!items.length) {
-          listEl.textContent = '还没有评论，来抢沙发。';
-          listEl.style.color = 'var(--color-text-muted)';
+          listEl.innerHTML = '<div class="glass-card empty-comments">暂无讨论留言，期待你的真知灼见。</div>';
           return;
         }
-        listEl.style.color = 'var(--color-text-secondary)';
         listEl.innerHTML = items
           .map(
             (c) =>
-              `<div style="padding:var(--space-3) 0; border-bottom:1px solid var(--color-border-subtle);">
-                <div style="font-weight:600; font-size:var(--font-size-13); color:var(--color-text);">${esc(c.displayName)}</div>
-                <div style="margin-top:var(--space-1); white-space:pre-wrap;">${esc(c.content)}</div>
+              `<div class="glass-card comment-item">
+                <div class="comment-author-row">
+                  <div class="comment-avatar">${esc(c.displayName ? c.displayName.slice(0, 1).toUpperCase() : 'U')}</div>
+                  <span class="comment-author-name">${esc(c.displayName || '社区读者')}</span>
+                </div>
+                <div class="comment-body">${esc(c.content)}</div>
               </div>`,
           )
           .join('');
       } catch (e) {
-        listEl.textContent = '评论加载失败';
-        listEl.style.color = 'var(--color-danger)';
+        listEl.innerHTML = '<div class="glass-card comment-error">讨论内容加载失败，请刷新重试</div>';
       }
     }
 
@@ -130,22 +199,27 @@ if (!Array.isArray(tags)) tags = [];
         const btn = form.querySelector('button[type="submit"]');
         btn.disabled = true;
         msg.textContent = '';
-        const res = await fetch('/api/comments', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            targetType: 'article',
-            targetId: articleId,
-            content,
-            turnstileToken: document.querySelector('[name="cf-turnstile-response"]')?.value || '',
-          }),
-        }).then((r) => r.json());
-        btn.disabled = false;
-        if (res.ok) {
-          input.value = '';
-          load();
-        } else {
-          msg.textContent = res.error || '发表失败';
+        try {
+          const res = await fetch('/api/comments', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              targetType: 'article',
+              targetId: articleId,
+              content,
+              turnstileToken: document.querySelector('[name="cf-turnstile-response"]')?.value || '',
+            }),
+          }).then((r) => r.json());
+          btn.disabled = false;
+          if (res.ok) {
+            input.value = '';
+            load();
+          } else {
+            msg.textContent = res.error || '发表失败';
+          }
+        } catch {
+          btn.disabled = false;
+          msg.textContent = '网络错误，请稍后重试';
         }
       });
     }
@@ -153,3 +227,225 @@ if (!Array.isArray(tags)) tags = [];
     load();
   </script>
 </BaseLayout>
+
+<style>
+  .article-read-container {
+    padding-top: var(--space-6);
+    padding-bottom: var(--space-16);
+  }
+  .back-nav-bar {
+    margin-bottom: var(--space-6);
+  }
+  .back-link {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-1);
+    font-size: var(--font-size-13);
+    font-weight: 500;
+    color: var(--color-text-secondary);
+    transition: all var(--duration-fast);
+  }
+  .back-link:hover {
+    color: var(--color-primary);
+    transform: translateX(-2px);
+  }
+
+  .article-header {
+    margin-bottom: var(--space-8);
+  }
+  .article-tags-wrap {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+    margin-bottom: var(--space-3);
+  }
+  .article-title {
+    margin: 0 0 var(--space-4);
+    font-size: var(--font-size-32);
+    line-height: var(--leading-tight);
+    font-weight: 800;
+    letter-spacing: -0.025em;
+    color: var(--color-text);
+  }
+  .article-meta-bar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-2);
+    font-size: var(--font-size-13);
+    color: var(--color-text-muted);
+  }
+  .author-badge {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    font-weight: 500;
+    color: var(--color-text-secondary);
+  }
+  .author-avatar-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--color-primary);
+  }
+  .meta-separator {
+    opacity: 0.5;
+  }
+
+  .external-link-card {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-4);
+    padding: var(--space-5);
+    margin-bottom: var(--space-6);
+    border-color: var(--color-primary-border);
+  }
+  .external-content {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+  }
+  .external-icon {
+    font-size: 1.5rem;
+  }
+  .external-title {
+    font-weight: 700;
+    font-size: var(--font-size-14);
+    color: var(--color-text);
+  }
+  .external-sub {
+    font-size: var(--font-size-12);
+    color: var(--color-text-muted);
+    margin-top: 2px;
+  }
+  .external-btn {
+    flex-shrink: 0;
+  }
+
+  .article-content-card {
+    padding: var(--space-8);
+    margin-bottom: var(--space-8);
+    background: var(--glass-bg);
+  }
+  .article-body {
+    white-space: pre-wrap;
+    font-size: var(--font-size-16);
+    line-height: var(--leading-relaxed);
+  }
+
+  /* 博客 × 论坛 结合与反向发酵卡片 */
+  .community-feedback-card {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-5);
+    padding: var(--space-6);
+    margin-bottom: var(--space-12);
+    border-color: var(--color-primary-border);
+    background: var(--gradient-cta-card);
+  }
+  .feedback-left {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--space-3);
+    max-width: 32rem;
+  }
+  .feedback-icon {
+    font-size: 1.5rem;
+  }
+  .feedback-title {
+    margin: 0 0 var(--space-1);
+    font-size: var(--font-size-16);
+    font-weight: 700;
+  }
+  .feedback-desc {
+    margin: 0;
+    font-size: var(--font-size-13);
+    line-height: var(--leading-normal);
+    color: var(--color-text-secondary);
+  }
+  .feedback-btn {
+    flex-shrink: 0;
+  }
+
+  /* 评论区 */
+  .comments-section {
+    padding-top: var(--space-6);
+  }
+  .comments-header {
+    margin-bottom: var(--space-5);
+  }
+  .comments-title {
+    margin: 0;
+    font-size: var(--font-size-20);
+    font-weight: 700;
+  }
+  .comments-subtitle {
+    font-size: var(--font-size-13);
+    color: var(--color-text-muted);
+  }
+  .comment-list-box {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+    margin-bottom: var(--space-6);
+  }
+  .comment-item {
+    padding: var(--space-4) var(--space-5);
+  }
+  .comment-author-row {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    margin-bottom: var(--space-2);
+  }
+  .comment-avatar {
+    width: 1.5rem;
+    height: 1.5rem;
+    border-radius: 50%;
+    background: var(--color-primary-subtle);
+    color: var(--color-primary-text);
+    font-size: var(--font-size-12);
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .comment-author-name {
+    font-size: var(--font-size-13);
+    font-weight: 600;
+    color: var(--color-text);
+  }
+  .comment-body {
+    font-size: var(--font-size-14);
+    color: var(--color-text-secondary);
+    line-height: var(--leading-normal);
+    white-space: pre-wrap;
+  }
+  .comment-form-card {
+    padding: var(--space-6);
+  }
+  .form-submit-row {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+  }
+  .comment-error-msg {
+    font-size: var(--font-size-13);
+    color: var(--color-danger);
+  }
+  .comment-login-prompt {
+    padding: var(--space-4) var(--space-5);
+    text-align: center;
+    font-size: var(--font-size-14);
+    color: var(--color-text-secondary);
+  }
+  .empty-comments {
+    padding: var(--space-6);
+    text-align: center;
+    color: var(--color-text-muted);
+    font-size: var(--font-size-14);
+  }
+</style>

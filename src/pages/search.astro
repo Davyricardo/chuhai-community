@@ -35,66 +35,236 @@ if (q) {
 const total = articleHits.length + topicHits.length;
 ---
 
-<BaseLayout title={q ? `搜索 ${q}` : '全站搜索'} description="搜索 ChatSI 的文章与话题">
-  <div class="container" style="padding-block:var(--space-8); max-width:var(--container-reading);">
-    <h1 style="margin:0 0 var(--space-5); font-size:var(--font-size-24); font-weight:800;">全站搜索</h1>
+<BaseLayout title={q ? `搜索：${q}` : '全站搜索'} description="即时检索 ChatSI 站内的全部实战博文与社区共创话题">
+  <div class="container search-page-container">
+    <header class="search-page-header animate-in">
+      <h1 class="search-page-title">全站智能检索</h1>
+      <p class="search-page-desc">一站式搜索深度实战文章、案例分析与社区话题征集池</p>
 
-    <form method="get" role="search">
-      <div class="form-field">
-        <label class="form-label" for="q">关键词</label>
-        <div style="display:flex; gap:var(--space-2);">
-          <input class="form-input" id="q" name="q" value={q} placeholder="输入关键词，搜索文章和话题" autofocus style="flex:1;" />
-          <button class="btn btn--primary" type="submit">搜索</button>
+      <form class="glass-pill search-bar-pill" method="get" role="search">
+        <svg class="search-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <circle cx="11" cy="11" r="7"></circle>
+          <path d="m20 20-3.5-3.5"></path>
+        </svg>
+        <input
+          class="search-input"
+          id="q"
+          name="q"
+          value={q}
+          placeholder="输入关键词检索（如 Docker、Claude、Workers、架构）..."
+          autofocus
+          aria-label="输入关键词"
+        />
+        <button class="btn btn--primary" type="submit">搜索</button>
+      </form>
+
+      {q && (
+        <div class="search-stats-badge">
+          <span>关键词「{q}」共匹配到 {total} 项结果</span>
         </div>
-      </div>
-    </form>
-
-    <p style="margin:0 0 var(--space-6); font-size:var(--font-size-14); color:var(--color-text-muted);">
-      {q ? `「${q}」共 ${total} 条结果` : '输入关键词开始搜索。'}
-    </p>
+      )}
+    </header>
 
     {
       articleHits.length ? (
-        <section style="margin-bottom:var(--space-8);">
-          <h2 style="margin:0 0 var(--space-3); font-size:var(--font-size-18); font-weight:700;">文章（{articleHits.length}）</h2>
-          <ul style="list-style:none; margin:0; padding:0;">
+        <section class="results-section animate-in">
+          <div class="section-title-row">
+            <span class="section-icon">📖</span>
+            <h2 class="section-title">相关实战博文 ({articleHits.length})</h2>
+          </div>
+          <div class="results-list">
             {
               articleHits.map((a) => (
-                <li style="padding:var(--space-3) 0; border-bottom:1px solid var(--color-border-subtle);">
-                  <a href={`/articles/${a.slug}`} style="color:var(--color-text); font-weight:500;">{a.title}</a>
-                  {a.summary ? <div class="line-clamp-2" style="margin-top:var(--space-1); font-size:var(--font-size-13); color:var(--color-text-muted);">{a.summary}</div> : null}
-                </li>
+                <article class="glass-card liquid-glow result-card">
+                  <h3 class="result-title">
+                    <a href={`/articles/${a.slug}`} class="result-link">{a.title}</a>
+                  </h3>
+                  {a.summary && <p class="result-summary line-clamp-2">{a.summary}</p>}
+                </article>
               ))
             }
-          </ul>
+          </div>
         </section>
       ) : null
     }
 
     {
       topicHits.length ? (
-        <section>
-          <h2 style="margin:0 0 var(--space-3); font-size:var(--font-size-18); font-weight:700;">话题（{topicHits.length}）</h2>
-          <ul style="list-style:none; margin:0; padding:0;">
+        <section class="results-section animate-in">
+          <div class="section-title-row">
+            <span class="section-icon">💡</span>
+            <h2 class="section-title">相关社区话题 ({topicHits.length})</h2>
+          </div>
+          <div class="results-list">
             {
               topicHits.map((t) => (
-                <li style="display:flex; align-items:center; justify-content:space-between; gap:var(--space-3); padding:var(--space-3) 0; border-bottom:1px solid var(--color-border-subtle);">
-                  <a href="/topics" style="color:var(--color-text); font-weight:500;">{t.title}</a>
-                  <span style="flex-shrink:0; font-size:var(--font-size-13); color:var(--color-text-muted); font-variant-numeric:tabular-nums;">{t.voteCount} 票</span>
-                </li>
+                <article class="glass-card liquid-glow result-card topic-result-card">
+                  <div>
+                    <h3 class="result-title">
+                      <a href="/topics" class="result-link">{t.title}</a>
+                    </h3>
+                    {t.description && <p class="result-summary line-clamp-2">{t.description}</p>}
+                  </div>
+                  <div class="topic-votes-badge">
+                    ▲ {t.voteCount} 票支持
+                  </div>
+                </article>
               ))
             }
-          </ul>
+          </div>
         </section>
       ) : null
     }
 
     {
       q && !total ? (
-        <div class="card" style="text-align:center; color:var(--color-text-muted); font-size:var(--font-size-14); padding-block:var(--space-8);">
-          没有找到相关内容，换个关键词试试。
+        <div class="glass-card empty-search-card animate-in">
+          <div class="empty-icon">🔍</div>
+          <p class="empty-title">未发现匹配「{q}」的内容</p>
+          <p class="empty-sub">你可以更换简短的技术词汇，或者直接前往话题社区发起该选题。</p>
+          <div style="margin-top:var(--space-4);">
+            <a href="/topics" class="btn btn--primary">去社区发起该话题</a>
+          </div>
         </div>
       ) : null
     }
   </div>
 </BaseLayout>
+
+<style>
+  .search-page-container {
+    padding-top: var(--space-8);
+    padding-bottom: var(--space-16);
+    max-width: var(--container-reading);
+  }
+  .search-page-header {
+    text-align: center;
+    margin-bottom: var(--space-8);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  .search-page-title {
+    margin: 0 0 var(--space-2);
+    font-size: var(--font-size-28);
+    font-weight: 800;
+    letter-spacing: -0.025em;
+    background: var(--gradient-brand-text);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+  .search-page-desc {
+    margin: 0 0 var(--space-6);
+    font-size: var(--font-size-14);
+    color: var(--color-text-secondary);
+  }
+  .search-bar-pill {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    padding: 6px 8px 6px 16px;
+    transition: all var(--duration-fast);
+  }
+  .search-bar-pill:focus-within {
+    box-shadow: 0 12px 36px rgba(0, 113, 227, 0.16), 0 0 0 3px rgba(0, 113, 227, 0.25);
+    border-color: var(--color-primary-border);
+  }
+  .search-icon {
+    color: var(--color-text-muted);
+    flex-shrink: 0;
+    margin-right: var(--space-2);
+  }
+  .search-input {
+    flex: 1;
+    border: none;
+    background: transparent;
+    font-size: var(--font-size-15);
+    color: var(--color-text);
+    outline: none;
+  }
+  .search-stats-badge {
+    margin-top: var(--space-4);
+    font-size: var(--font-size-13);
+    color: var(--color-text-muted);
+  }
+
+  .results-section {
+    margin-bottom: var(--space-8);
+  }
+  .section-title-row {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    margin-bottom: var(--space-4);
+  }
+  .section-icon {
+    font-size: 1.25rem;
+  }
+  .section-title {
+    margin: 0;
+    font-size: var(--font-size-18);
+    font-weight: 700;
+  }
+  .results-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+  }
+  .result-card {
+    padding: var(--space-5);
+  }
+  .result-title {
+    margin: 0 0 var(--space-1);
+    font-size: var(--font-size-16);
+    font-weight: 700;
+  }
+  .result-link {
+    color: var(--color-text);
+  }
+  .result-link:hover {
+    color: var(--color-primary);
+  }
+  .result-summary {
+    margin: 0;
+    font-size: var(--font-size-13);
+    color: var(--color-text-secondary);
+    line-height: var(--leading-normal);
+  }
+
+  .topic-result-card {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: var(--space-4);
+  }
+  .topic-votes-badge {
+    flex-shrink: 0;
+    font-size: var(--font-size-12);
+    font-weight: 600;
+    color: var(--color-primary-text);
+    background: var(--color-primary-subtle);
+    border: 1px solid var(--color-primary-border);
+    padding: 4px 10px;
+    border-radius: var(--radius-full);
+  }
+
+  .empty-search-card {
+    padding: var(--space-12) var(--space-6);
+    text-align: center;
+  }
+  .empty-icon {
+    font-size: 2rem;
+    margin-bottom: var(--space-3);
+  }
+  .empty-title {
+    margin: 0 0 var(--space-2);
+    font-size: var(--font-size-16);
+    font-weight: 700;
+  }
+  .empty-sub {
+    margin: 0;
+    font-size: var(--font-size-14);
+    color: var(--color-text-muted);
+  }
+</style>

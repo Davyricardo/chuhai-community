@@ -1,19 +1,82 @@
 ---
 const links = [
-  { href: '/articles', label: '全部文章' },
-  { href: '/topics', label: '话题征集' },
-  { href: '/tools', label: '工具推荐' },
+  { href: '/articles', label: '深度博文' },
+  { href: '/topics', label: '话题社区' },
+  { href: '/tools', label: '云工具箱' },
   { href: '/search', label: '全站搜索' },
 ];
 ---
-<footer style="margin-top:var(--space-12); padding-block:var(--space-8); border-top:1px solid var(--color-border); background-color:var(--color-surface); font-size:var(--font-size-13); color:var(--color-text-muted);">
-  <div class="container" style="display:flex; flex-wrap:wrap; justify-content:space-between; gap:var(--space-4);">
-    <div>
-      <div style="font-weight:600; color:var(--color-text); margin-bottom:var(--space-1);">ChatSI · si.kittywizards.com</div>
-      <div>AI 与云服务的实战内容、工具导航与话题共创社区。</div>
+<footer class="site-footer">
+  <div class="container footer-container">
+    <div class="footer-brand">
+      <div class="footer-title">
+        <img src="/logo.png" width="22" height="22" alt="" aria-hidden="true" style="opacity: 0.85;" />
+        <span>ChatSI · si.kittywizards.com</span>
+      </div>
+      <p class="footer-desc">面向 AI 与云服务的中文实战博客、工具导航与话题共创社区。</p>
     </div>
-    <nav style="display:flex; flex-wrap:wrap; gap:var(--space-4);" aria-label="页脚导航">
-      {links.map((l) => <a href={l.href} class="link-underline">{l.label}</a>)}
+    <nav class="footer-nav" aria-label="页脚导航">
+      {links.map((l) => <a href={l.href} class="link-underline footer-link">{l.label}</a>)}
     </nav>
   </div>
+  <div class="container footer-bottom">
+    <span>© {new Date().getFullYear()} ChatSI. 极简 · 开放 · 共创.</span>
+  </div>
 </footer>
+
+<style>
+  .site-footer {
+    margin-top: var(--space-16);
+    padding-top: var(--space-10);
+    padding-bottom: var(--space-8);
+    border-top: 1px solid var(--glass-border);
+    background: var(--glass-bg-subtle);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    font-size: var(--font-size-13);
+    color: var(--color-text-muted);
+  }
+  .footer-container {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: var(--space-6);
+  }
+  .footer-brand {
+    max-width: 28rem;
+  }
+  .footer-title {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    font-weight: 700;
+    color: var(--color-text);
+    margin-bottom: var(--space-2);
+    font-size: var(--font-size-14);
+  }
+  .footer-desc {
+    margin: 0;
+    line-height: var(--leading-normal);
+    color: var(--color-text-secondary);
+  }
+  .footer-nav {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-5);
+  }
+  .footer-link {
+    color: var(--color-text-secondary);
+    font-weight: 500;
+  }
+  .footer-link:hover {
+    color: var(--color-primary);
+  }
+  .footer-bottom {
+    margin-top: var(--space-8);
+    padding-top: var(--space-4);
+    border-top: 1px solid var(--color-border-subtle);
+    font-size: var(--font-size-12);
+    color: var(--color-text-muted);
+  }
+</style>

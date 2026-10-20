@@ -8,77 +8,240 @@ interface Props {
 const { user = null, currentPath = '/' } = Astro.props;
 const links = [
   { href: '/', label: '首页', match: (p: string) => p === '/' },
-  { href: '/articles', label: '文章', match: (p: string) => p.startsWith('/articles') },
-  { href: '/topics', label: '话题投票', match: (p: string) => p.startsWith('/topics') },
+  { href: '/articles', label: '深度博文', match: (p: string) => p.startsWith('/articles') },
+  { href: '/topics', label: '话题社区', match: (p: string) => p.startsWith('/topics') },
   { href: '/tools', label: 'AI 云工具', match: (p: string) => p.startsWith('/tools') },
 ];
 ---
-<header
-  class="card"
-  style="position:sticky; top:0; z-index:var(--z-sticky); border-radius:0; border-inline:none; border-top:none; backdrop-filter:blur(12px); background-color:var(--color-surface-glass); padding-block:var(--space-3);"
->
-  <div class="container" style="display:flex; align-items:center; justify-content:space-between; gap:var(--space-4);">
-    <div style="display:flex; align-items:center; gap:var(--space-5); min-width:0;">
-      <a href="/" style="display:inline-flex; align-items:center; gap:var(--space-2); font-size:var(--font-size-18); font-weight:700; color:var(--color-text);">
-        <img src="/logo.png" width="28" height="28" alt="" aria-hidden="true" style="flex-shrink:0; width:1.75rem; height:1.75rem;" />
-        <span>ChatSI</span>
-      </a>
-      <nav class="hide-mobile" style="display:flex; gap:var(--space-2);" aria-label="主导航">
-        {
-          links.map((l) => (
-            <a href={l.href} class="tag" style={l.match(currentPath) ? 'background-color:var(--color-primary-subtle); color:var(--color-primary-text); border-color:var(--color-primary-border); font-weight:600;' : ''}>
-              {l.label}
-            </a>
-          ))
-        }
-      </nav>
-    </div>
+<header class="navbar-wrapper">
+  <div class="container navbar-container">
+    <div class="navbar-island glass liquid-glow">
+      <!-- 左：Logo 与品牌名 -->
+      <div class="navbar-left">
+        <a href="/" class="brand-link" aria-label="ChatSI 首页">
+          <img src="/logo.png" width="28" height="28" alt="" aria-hidden="true" class="brand-logo" />
+          <span class="brand-title">ChatSI</span>
+        </a>
 
-    <div style="display:flex; align-items:center; gap:var(--space-3); flex-shrink:0;">
-      <a href="/search" class="btn btn--ghost btn--icon" aria-label="全站搜索">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-          <circle cx="11" cy="11" r="7"></circle>
-          <path d="m20 20-3.5-3.5"></path>
-        </svg>
-      </a>
-      <button type="button" id="theme-toggle" class="btn btn--ghost btn--icon" aria-label="切换深浅色主题">
-        <svg class="icon-sun" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-          <circle cx="12" cy="12" r="4"></circle>
-          <path d="M12 2v2M12 20v2M2 12h2M20 12h2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"></path>
-        </svg>
-        <svg class="icon-moon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-          <path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"></path>
-        </svg>
-      </button>
-      {
-        user ? (
-          <div style="display:flex; align-items:center; gap:var(--space-3);">
-            {user.role === 'admin' && <a href="/admin" class="badge badge--open">后台</a>}
-            <span style="font-size:var(--font-size-13); color:var(--color-text-secondary);">{user.displayName}</span>
-            <a href="/auth/logout" class="btn btn--ghost" style="padding-inline:var(--space-2); font-size:var(--font-size-13);">退出</a>
-          </div>
-        ) : (
-          <div style="display:flex; gap:var(--space-2);">
-            <a href="/auth/login" class="btn btn--ghost">登录</a>
-            <a href="/auth/register" class="btn btn--primary">注册</a>
-          </div>
-        )
-      }
+        <!-- 中：导航药丸链接 -->
+        <nav class="nav-links" aria-label="主导航">
+          {
+            links.map((l) => {
+              const active = l.match(currentPath);
+              return (
+                <a
+                  href={l.href}
+                  class={`nav-pill ${active ? 'nav-pill--active' : ''}`}
+                >
+                  {l.label}
+                </a>
+              );
+            })
+          }
+        </nav>
+      </div>
+
+      <!-- 右：搜索、主题切换与账号操作 -->
+      <div class="navbar-right">
+        <a href="/search" class="action-btn" aria-label="全站搜索" title="全站搜索">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <circle cx="11" cy="11" r="7"></circle>
+            <path d="m20 20-3.5-3.5"></path>
+          </svg>
+        </a>
+
+        <button type="button" id="theme-toggle" class="action-btn" aria-label="切换深浅色主题" title="切换深浅色">
+          <svg class="icon-sun" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <circle cx="12" cy="12" r="4"></circle>
+            <path d="M12 2v2M12 20v2M2 12h2M20 12h2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"></path>
+          </svg>
+          <svg class="icon-moon" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"></path>
+          </svg>
+        </button>
+
+        {
+          user ? (
+            <div class="user-menu">
+              {user.role === 'admin' && <a href="/admin" class="badge badge--open">后台</a>}
+              <span class="user-name">{user.displayName}</span>
+              <a href="/auth/logout" class="btn-logout">退出</a>
+            </div>
+          ) : (
+            <div class="auth-buttons">
+              <a href="/auth/login" class="btn-login">登录</a>
+              <a href="/auth/register" class="btn btn--primary btn-register">注册</a>
+            </div>
+          )
+        }
+      </div>
     </div>
   </div>
 </header>
 
 <style>
-  @media (max-width: 767px) {
-    .hide-mobile { display: none !important; }
+  .navbar-wrapper {
+    position: sticky;
+    top: 0;
+    z-index: var(--z-sticky);
+    padding-top: var(--space-2);
+    padding-bottom: var(--space-2);
+    pointer-events: none;
   }
-  .btn--icon { padding-inline: var(--space-2); }
-  /* 浅色显示月亮（点击切到深色），深色显示太阳 */
+  .navbar-container {
+    pointer-events: auto;
+  }
+  .navbar-island {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-4);
+    padding: var(--space-2) var(--space-4);
+    border-radius: var(--radius-full);
+    backdrop-filter: blur(28px) saturate(190%);
+    -webkit-backdrop-filter: blur(28px) saturate(190%);
+    box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.08), inset 0 1px 1px 0 var(--glass-highlight);
+    border: 1px solid var(--glass-border);
+  }
+  .navbar-left {
+    display: flex;
+    align-items: center;
+    gap: var(--space-5);
+    min-width: 0;
+  }
+  .brand-link {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+    font-size: var(--font-size-18);
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    color: var(--color-text);
+    flex-shrink: 0;
+  }
+  .brand-logo {
+    width: 1.75rem;
+    height: 1.75rem;
+    flex-shrink: 0;
+  }
+  .brand-title {
+    font-weight: 800;
+    background: var(--gradient-brand-text);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+  .nav-links {
+    display: flex;
+    align-items: center;
+    gap: var(--space-1);
+  }
+  .nav-pill {
+    padding: 6px 14px;
+    font-size: var(--font-size-13);
+    font-weight: 500;
+    color: var(--color-text-secondary);
+    border-radius: var(--radius-full);
+    transition: all var(--duration-fast) var(--ease-apple);
+    white-space: nowrap;
+  }
+  .nav-pill:hover {
+    color: var(--color-text);
+    background: var(--color-surface-subtle);
+    transform: translateY(-1px);
+  }
+  .nav-pill--active {
+    color: var(--color-primary-text) !important;
+    background: var(--color-primary-subtle) !important;
+    font-weight: 600;
+    border: 1px solid var(--color-primary-border);
+  }
+  .navbar-right {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    flex-shrink: 0;
+  }
+  .action-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.25rem;
+    height: 2.25rem;
+    border-radius: 50%;
+    color: var(--color-text-secondary);
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    transition: all var(--duration-fast) var(--ease-apple);
+  }
+  .action-btn:hover {
+    color: var(--color-text);
+    background: var(--color-surface-subtle);
+    transform: scale(1.05);
+  }
+  .action-btn:active {
+    transform: scale(0.92);
+  }
+  .user-menu {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+  }
+  .user-name {
+    font-size: var(--font-size-13);
+    font-weight: 500;
+    color: var(--color-text-secondary);
+    max-width: 8rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .btn-logout {
+    font-size: var(--font-size-13);
+    color: var(--color-text-muted);
+    padding: 4px 8px;
+    border-radius: var(--radius-md);
+  }
+  .btn-logout:hover {
+    color: var(--color-danger);
+  }
+  .auth-buttons {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+  }
+  .btn-login {
+    font-size: var(--font-size-13);
+    font-weight: 500;
+    color: var(--color-text);
+    padding: 6px 12px;
+    border-radius: var(--radius-full);
+  }
+  .btn-login:hover {
+    background: var(--color-surface-subtle);
+  }
+  .btn-register {
+    min-height: 2rem;
+    padding: 4px 14px;
+    font-size: var(--font-size-13);
+  }
+
+  /* 浅色显示月亮，深色显示太阳 */
   .icon-moon { display: none; }
   :root[data-theme="dark"] .icon-sun { display: none; }
   :root[data-theme="dark"] .icon-moon { display: block; }
   @media (prefers-color-scheme: dark) {
     :root:not([data-theme="light"]) .icon-sun { display: none; }
     :root:not([data-theme="light"]) .icon-moon { display: block; }
+  }
+
+  @media (max-width: 767px) {
+    .nav-links { display: none; }
+    .navbar-island {
+      border-radius: var(--radius-xl);
+      padding: var(--space-2) var(--space-3);
+    }
+    .user-name { display: none; }
   }
 </style>

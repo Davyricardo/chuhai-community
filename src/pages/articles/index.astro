@@ -34,31 +34,60 @@ try {
 }
 ---
 
-<BaseLayout title={q ? `搜索：${q}` : '全部文章'} description="按关键词浏览 AI 与云服务实战文章">
-  <div class="container" style="padding-block:var(--space-8);">
-    <h1 style="margin:0 0 var(--space-2); font-size:var(--font-size-24); font-weight:800;">
-      {q ? `搜索「${q}」` : '全部文章'}
-    </h1>
-    <p style="margin:0 0 var(--space-6); font-size:var(--font-size-14); color:var(--color-text-muted);">
-      {list.length} 篇文章{q ? '匹配该关键词' : ''}
-    </p>
-
-    <form class="search" method="get" role="search">
-      <label class="form-label" for="q" style="margin-bottom:var(--space-2);">搜索</label>
-      <div style="display:flex; gap:var(--space-2);">
-        <input class="form-input" id="q" name="q" value={q} placeholder="搜索文章标题、摘要、标签" style="flex:1;" />
-        <button class="btn btn--primary" type="submit">搜索</button>
+<BaseLayout title={q ? `搜索：${q}` : '全部深度博文'} description="按关键词或技术方向浏览 AI 与云服务深度实战长文">
+  <div class="container articles-page-container">
+    <header class="articles-header animate-in">
+      <div class="header-badge">
+        <span>📖 实战长文文库</span>
       </div>
-    </form>
+
+      <h1 class="header-title">
+        {q ? `搜索「${q}」的结果` : '全部深度实战博文'}
+      </h1>
+
+      <p class="header-desc">
+        {list.length} 篇实战解析与架构沉淀{q ? '匹配当前查询条件' : '，涵盖模型微调、边缘云部署与稳定性调优'}。
+      </p>
+
+      <!-- 搜索输入框胶囊 -->
+      <form class="articles-search-form glass-pill" method="get" role="search">
+        <svg class="search-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <circle cx="11" cy="11" r="7"></circle>
+          <path d="m20 20-3.5-3.5"></path>
+        </svg>
+        <input
+          class="search-input"
+          id="q"
+          name="q"
+          value={q}
+          placeholder="搜索文章标题、摘要、标签或技术栈..."
+          aria-label="搜索文章"
+        />
+        {q && (
+          <a href="/articles" class="clear-search-btn" title="清除搜索条件">
+            ✕
+          </a>
+        )}
+        <button class="btn btn--primary search-submit-btn" type="submit">
+          检索
+        </button>
+      </form>
+    </header>
 
     {
       list.length ? (
-        <div class="grid-cards-3 reveal">
+        <div class="grid-cards-3 stagger">
           {list.map((a) => <ArticleCard article={a} />)}
         </div>
       ) : (
-        <div class="card" style="text-align:center; color:var(--color-text-muted); font-size:var(--font-size-14); padding-block:var(--space-8);">
-          {q ? '没有匹配的文章，换个关键词试试' : '还没有文章'}
+        <div class="glass-card empty-results-card">
+          <div class="empty-icon">🔍</div>
+          <p class="empty-title">未找到与「{q}」匹配的文章</p>
+          <p class="empty-sub">建议尝试其他技术关键词，或前往话题社区提交新选题。</p>
+          <div class="empty-actions">
+            <a href="/articles" class="btn btn--secondary">查看所有文章</a>
+            <a href="/topics" class="btn btn--primary">去社区提需求</a>
+          </div>
         </div>
       )
     }
@@ -66,5 +95,110 @@ try {
 </BaseLayout>
 
 <style>
-  .search { margin-bottom: var(--space-6); }
+  .articles-page-container {
+    padding-top: var(--space-8);
+    padding-bottom: var(--space-16);
+  }
+  .articles-header {
+    text-align: center;
+    margin-bottom: var(--space-10);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  .header-badge {
+    display: inline-flex;
+    padding: 4px 14px;
+    border-radius: var(--radius-full);
+    background: var(--glass-bg-subtle);
+    border: 1px solid var(--glass-border);
+    font-size: var(--font-size-12);
+    font-weight: 500;
+    color: var(--color-primary-text);
+    margin-bottom: var(--space-3);
+  }
+  .header-title {
+    margin: 0 0 var(--space-2);
+    font-size: var(--font-size-28);
+    font-weight: 800;
+    letter-spacing: -0.025em;
+    background: var(--gradient-brand-text);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+  .header-desc {
+    margin: 0 0 var(--space-6);
+    font-size: var(--font-size-14);
+    color: var(--color-text-secondary);
+    max-width: 36rem;
+  }
+  .articles-search-form {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    max-width: 34rem;
+    padding: 6px 8px 6px 16px;
+    transition: all var(--duration-fast);
+  }
+  .articles-search-form:focus-within {
+    box-shadow: 0 12px 36px rgba(0, 113, 227, 0.16), 0 0 0 3px rgba(0, 113, 227, 0.25);
+    border-color: var(--color-primary-border);
+  }
+  .search-icon {
+    color: var(--color-text-muted);
+    flex-shrink: 0;
+    margin-right: var(--space-2);
+  }
+  .search-input {
+    flex: 1;
+    border: none;
+    background: transparent;
+    font-size: var(--font-size-14);
+    color: var(--color-text);
+    outline: none;
+  }
+  .search-input::placeholder {
+    color: var(--color-text-muted);
+  }
+  .clear-search-btn {
+    padding: 4px 8px;
+    color: var(--color-text-muted);
+    font-size: var(--font-size-12);
+    margin-right: var(--space-2);
+  }
+  .clear-search-btn:hover {
+    color: var(--color-text);
+  }
+  .search-submit-btn {
+    min-height: 2.25rem;
+    padding: 4px 16px;
+    font-size: var(--font-size-13);
+  }
+
+  .empty-results-card {
+    padding: var(--space-12) var(--space-6);
+    text-align: center;
+    max-width: 32rem;
+    margin: var(--space-8) auto 0;
+  }
+  .empty-icon {
+    font-size: 2rem;
+    margin-bottom: var(--space-3);
+  }
+  .empty-title {
+    margin: 0 0 var(--space-2);
+    font-size: var(--font-size-16);
+    font-weight: 700;
+  }
+  .empty-sub {
+    margin: 0 0 var(--space-6);
+    font-size: var(--font-size-14);
+    color: var(--color-text-muted);
+  }
+  .empty-actions {
+    display: flex;
+    justify-content: center;
+    gap: var(--space-3);
+  }
 </style>

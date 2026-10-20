@@ -8,53 +8,140 @@ import TopicCard from '../../components/TopicCard.astro';
 const db = getDB();
 const user = Astro.locals.user ?? null;
 const list = await db.select().from(topics).orderBy(desc(topics.voteCount), desc(topics.createdAt)).limit(50);
+
+// 统计各状态指标
+const totalCount = list.length;
+const doneCount = list.filter((t) => t.status === 'done').length;
+const totalVotes = list.reduce((acc, t) => acc + (t.voteCount || 0), 0);
 ---
 
-<BaseLayout title="话题征集" description="投票选出你最想了解的 AI 与云服务话题，高票优先创作">
-  <div class="container" style="padding-block:var(--space-8); max-width:var(--container-reading);">
-    <h1 style="margin:0 0 var(--space-2); font-size:var(--font-size-24); font-weight:800;">话题征集</h1>
-    <p style="margin:0 0 var(--space-6); font-size:var(--font-size-14); color:var(--color-text-muted);">
-      投票选出你最想了解的方向，高票会优先创作。
-    </p>
+<BaseLayout title="话题社区" description="探索与投票社区话题，决定下一篇 AI 与云服务深度博文">
+  <div class="container forum-page-container">
+    <!-- 论坛专属 Header 视觉 -->
+    <header class="forum-header animate-in">
+      <div class="forum-badge">
+        <span class="icon-sparkle">✦</span>
+        <span>社区灵感孵化中心</span>
+      </div>
 
+      <h1 class="forum-title">
+        话题社区 · 灵感共创
+      </h1>
+
+      <p class="forum-desc">
+        每一篇高质量深度博文的诞生，都源于社区里的一次真实痛点讨论。投票支持你感兴趣的选题，或发起你的新困惑。
+      </p>
+
+      <!-- 论坛数据统计胶囊 -->
+      <div class="forum-stats-bar glass-pill">
+        <div class="stat-item">
+          <span class="stat-number">{totalCount}</span>
+          <span class="stat-label">个候选话题</span>
+        </div>
+        <span class="stat-divider" aria-hidden="true">/</span>
+        <div class="stat-item">
+          <span class="stat-number">{totalVotes}</span>
+          <span class="stat-label">次支持投票</span>
+        </div>
+        <span class="stat-divider" aria-hidden="true">/</span>
+        <div class="stat-item">
+          <span class="stat-number stat-number--highlight">{doneCount}</span>
+          <span class="stat-label">篇已采纳成文</span>
+        </div>
+      </div>
+    </header>
+
+    <!-- 发起新话题卡片 -->
     {
       user ? (
-        <form class="card" id="newTopic" style="margin-bottom:var(--space-6); padding:var(--space-5);">
+        <form class="glass-card liquid-glow create-topic-card animate-in" id="newTopic">
+          <div class="card-top-header">
+            <div class="card-icon-badge">✍️</div>
+            <div>
+              <h2 class="create-card-title">发起新话题征集</h2>
+              <p class="create-card-subtitle">清晰描述你遇到的技术难题、选型困惑或想要了解的工具评测</p>
+            </div>
+          </div>
+
           <div class="form-field">
             <label class="form-label" for="t-title">话题标题</label>
-            <input class="form-input" id="t-title" name="title" maxlength="80" placeholder="例如：Stripe 个人开发者怎么过审？" required />
+            <input class="form-input" id="t-title" name="title" maxlength="80" placeholder="例如：Cloudflare Workers 结合 D1 如何做好高并发冷启动优化？" required />
           </div>
+
           <div class="form-field">
-            <label class="form-label" for="t-desc">补充说明（可选）</label>
-            <textarea class="form-textarea" id="t-desc" name="description" maxlength="500" placeholder="想了解的具体问题、场景"></textarea>
+            <label class="form-label" for="t-desc">详细背景与场景说明（可选）</label>
+            <textarea class="form-textarea" id="t-desc" name="description" maxlength="500" placeholder="补充你的具体痛点、目前使用的技术栈或期望看到的对比维度..."></textarea>
           </div>
-          <div style="display:flex; align-items:center; gap:var(--space-3);">
-            <button class="btn btn--primary" type="submit">提交话题</button>
-            <span id="msg" style="font-size:var(--font-size-13); color:var(--color-danger);"></span>
+
+          <div class="create-actions">
+            <button class="btn btn--primary" type="submit">
+              发布到候选池
+            </button>
+            <span id="msg" class="action-msg"></span>
           </div>
         </form>
       ) : (
-        <div class="card" style="margin-bottom:var(--space-6); text-align:center; font-size:var(--font-size-14); color:var(--color-text-muted);">
-          <a href="/auth/login">登录</a> 后可以提交话题和投票。
+        <div class="glass-card login-prompt-card animate-in">
+          <div class="prompt-icon">💡</div>
+          <div class="prompt-text">
+            <strong>想参与选题共创？</strong> 
+            <span><a href="/auth/login" class="prompt-link">登录</a> 或 <a href="/auth/register" class="prompt-link">注册</a> 账号后，即可投票支持心仪选题，或直接提交你的新需求。</span>
+          </div>
         </div>
       )
     }
 
-    <section id="list" style="display:flex; flex-direction:column; gap:var(--space-3);">
-      {
-        list.length ? (
-          list.map((t) => <TopicCard topic={t} loggedIn={!!user} />)
-        ) : (
-          <div class="card" style="text-align:center; color:var(--color-text-muted); font-size:var(--font-size-14); padding-block:var(--space-8);">
-            还没有话题，成为第一个提交者。
-          </div>
-        )
-      }
-    </section>
+    <!-- 话题列表与状态筛选 -->
+    <div class="topic-list-section">
+      <div class="filter-bar">
+        <div class="filter-tabs" role="tablist" aria-label="话题状态筛选">
+          <button type="button" class="tab-pill tab-pill--active" data-filter="all">全部话题 ({totalCount})</button>
+          <button type="button" class="tab-pill" data-filter="open">征集中</button>
+          <button type="button" class="tab-pill" data-filter="planned">规划中</button>
+          <button type="button" class="tab-pill" data-filter="done">已成文出炉</button>
+        </div>
+      </div>
+
+      <section id="list" class="topic-stream stagger">
+        {
+          list.length ? (
+            list.map((t) => (
+              <div class="topic-wrapper" data-status={t.status}>
+                <TopicCard topic={t} loggedIn={!!user} />
+              </div>
+            ))
+          ) : (
+            <div class="glass-card empty-topics-card">
+              <p style="margin:0;">目前还没有候选话题，成为第一个发起人吧！</p>
+            </div>
+          )
+        }
+      </section>
+    </div>
   </div>
 
   <script define:vars={{ loggedIn: !!user }}>
-    // 乐观更新：先改数字再发请求，失败回滚
+    // 话题筛选 Tab
+    const tabBtns = document.querySelectorAll('.tab-pill');
+    const topicWrappers = document.querySelectorAll('.topic-wrapper');
+
+    tabBtns.forEach((btn) => {
+      btn.addEventListener('click', () => {
+        tabBtns.forEach((b) => b.classList.remove('tab-pill--active'));
+        btn.classList.add('tab-pill--active');
+        const filter = btn.dataset.filter;
+
+        topicWrappers.forEach((wrapper) => {
+          if (filter === 'all' || wrapper.dataset.status === filter) {
+            wrapper.style.display = 'block';
+          } else {
+            wrapper.style.display = 'none';
+          }
+        });
+      });
+    });
+
+    // 乐观更新投票
     document.querySelectorAll('.vote-btn').forEach((btn) => {
       btn.addEventListener('click', async () => {
         if (!loggedIn) {
@@ -64,10 +151,11 @@ const list = await db.select().from(topics).orderBy(desc(topics.voteCount), desc
         const id = btn.dataset.id;
         const countEl = document.querySelector(`[data-count="${id}"]`);
         const before = parseInt(countEl?.textContent || '0', 10);
-        const wasVoted = btn.classList.contains('vote-btn--voted');
+        const wasVoted = btn.classList.contains('vote-btn--voted') || btn.classList.contains('vote-capsule--voted');
         const optimistic = wasVoted ? Math.max(0, before - 1) : before + 1;
 
         btn.classList.toggle('vote-btn--voted', !wasVoted);
+        btn.classList.toggle('vote-capsule--voted', !wasVoted);
         if (countEl) countEl.textContent = String(optimistic);
         btn.disabled = true;
 
@@ -76,14 +164,17 @@ const list = await db.select().from(topics).orderBy(desc(topics.voteCount), desc
           if (res.ok) {
             if (countEl) countEl.textContent = String(res.voteCount);
             btn.classList.toggle('vote-btn--voted', !!res.voted);
+            btn.classList.toggle('vote-capsule--voted', !!res.voted);
           } else {
             // 回滚
             btn.classList.toggle('vote-btn--voted', wasVoted);
+            btn.classList.toggle('vote-capsule--voted', wasVoted);
             if (countEl) countEl.textContent = String(before);
             if (res.error) alert(res.error);
           }
         } catch {
           btn.classList.toggle('vote-btn--voted', wasVoted);
+          btn.classList.toggle('vote-capsule--voted', wasVoted);
           if (countEl) countEl.textContent = String(before);
         } finally {
           btn.disabled = false;
@@ -91,6 +182,7 @@ const list = await db.select().from(topics).orderBy(desc(topics.voteCount), desc
       });
     });
 
+    // 提交新话题
     const form = document.getElementById('newTopic');
     if (form) {
       form.addEventListener('submit', async (e) => {
@@ -122,3 +214,177 @@ const list = await db.select().from(topics).orderBy(desc(topics.voteCount), desc
     }
   </script>
 </BaseLayout>
+
+<style>
+  .forum-page-container {
+    padding-top: var(--space-8);
+    padding-bottom: var(--space-12);
+    max-width: var(--container-reading);
+  }
+  .forum-header {
+    text-align: center;
+    margin-bottom: var(--space-8);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  .forum-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+    padding: 4px 14px;
+    border-radius: var(--radius-full);
+    background: var(--glass-bg-subtle);
+    border: 1px solid var(--glass-border);
+    font-size: var(--font-size-12);
+    font-weight: 500;
+    color: var(--color-primary-text);
+    margin-bottom: var(--space-3);
+  }
+  .forum-title {
+    margin: 0 0 var(--space-2);
+    font-size: var(--font-size-28);
+    font-weight: 800;
+    letter-spacing: -0.025em;
+    background: var(--gradient-brand-text);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+  .forum-desc {
+    margin: 0 0 var(--space-6);
+    font-size: var(--font-size-14);
+    line-height: var(--leading-relaxed);
+    color: var(--color-text-secondary);
+    max-width: 36rem;
+  }
+  .forum-stats-bar {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-4);
+    padding: var(--space-2) var(--space-6);
+  }
+  .stat-item {
+    display: flex;
+    align-items: baseline;
+    gap: var(--space-1);
+  }
+  .stat-number {
+    font-size: var(--font-size-16);
+    font-weight: 700;
+    color: var(--color-text);
+    font-variant-numeric: tabular-nums;
+  }
+  .stat-number--highlight {
+    color: var(--color-success);
+  }
+  .stat-label {
+    font-size: var(--font-size-12);
+    color: var(--color-text-muted);
+  }
+  .stat-divider {
+    color: var(--color-border);
+  }
+
+  .create-topic-card {
+    padding: var(--space-6);
+    margin-bottom: var(--space-8);
+  }
+  .card-top-header {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    margin-bottom: var(--space-5);
+  }
+  .card-icon-badge {
+    font-size: 1.5rem;
+    padding: var(--space-2);
+    background: var(--color-primary-subtle);
+    border-radius: var(--radius-lg);
+  }
+  .create-card-title {
+    margin: 0;
+    font-size: var(--font-size-16);
+    font-weight: 700;
+  }
+  .create-card-subtitle {
+    margin: 2px 0 0;
+    font-size: var(--font-size-12);
+    color: var(--color-text-muted);
+  }
+  .create-actions {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+  }
+  .action-msg {
+    font-size: var(--font-size-13);
+    color: var(--color-danger);
+  }
+
+  .login-prompt-card {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    padding: var(--space-4) var(--space-5);
+    margin-bottom: var(--space-8);
+    font-size: var(--font-size-14);
+    color: var(--color-text-secondary);
+  }
+  .prompt-icon {
+    font-size: 1.25rem;
+  }
+  .prompt-link {
+    font-weight: 600;
+    color: var(--color-primary);
+  }
+
+  /* 筛选器 Tab */
+  .filter-bar {
+    margin-bottom: var(--space-5);
+  }
+  .filter-tabs {
+    display: flex;
+    gap: var(--space-2);
+    overflow-x: auto;
+    padding-bottom: var(--space-1);
+  }
+  .tab-pill {
+    padding: 6px 16px;
+    font-size: var(--font-size-13);
+    font-weight: 500;
+    color: var(--color-text-secondary);
+    background: var(--glass-bg-subtle);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-full);
+    cursor: pointer;
+    transition: all var(--duration-fast);
+    white-space: nowrap;
+  }
+  .tab-pill:hover {
+    color: var(--color-text);
+    background: var(--color-surface-active);
+  }
+  .tab-pill--active {
+    background: var(--color-primary) !important;
+    color: #ffffff !important;
+    border-color: var(--color-primary) !important;
+    font-weight: 600;
+    box-shadow: 0 4px 12px rgba(0, 113, 227, 0.3);
+  }
+
+  .topic-stream {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4);
+  }
+  .topic-wrapper {
+    transition: opacity var(--duration-fast);
+  }
+  .empty-topics-card {
+    padding: var(--space-10);
+    text-align: center;
+    color: var(--color-text-muted);
+    font-size: var(--font-size-14);
+  }
+</style>

@@ -33,24 +33,54 @@ for (const a of latest) {
 const hotTags = [...tagSet.entries()].sort((a, b) => b[1] - a[1]).slice(0, 8);
 
 const statusLabel: Record<string, string> = { open: '征集中', planned: '规划中', done: '已完成' };
+
+// 精选置顶：若有文章，取第一篇作为 Featured Spotlight
+const featuredArticle = latest.length > 0 ? latest[0] : null;
+const regularArticles = latest.length > 1 ? latest.slice(1) : [];
 ---
 
-<BaseLayout title="首页" description="AI 与云服务实战攻略、话题投票与工具推荐社区">
-  <!-- Hero -->
-  <section style="background:var(--gradient-hero-bg); border-bottom:1px solid var(--color-border);">
-    <div class="container" style="padding-block:var(--space-12);">
-      <h1 style="margin:0 0 var(--space-3); font-size:var(--font-size-30); line-height:var(--leading-tight); font-weight:800; background:var(--gradient-brand-text); -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent; color:var(--color-primary-text);">
+<BaseLayout title="首页" description="AI 与云服务实战博客、话题共创社区与工具推荐">
+  <!-- Hero Section -->
+  <section class="hero-section">
+    <div class="container hero-container">
+      <div class="hero-badge animate-in">
+        <span class="pulse-dot" aria-hidden="true"></span>
+        <span>聚焦实战经验 · 社区投票驱动</span>
+      </div>
+
+      <h1 class="hero-headline animate-in">
         AI 与云服务实战 · 少走弯路
       </h1>
-      <p style="margin:0 0 var(--space-6); font-size:var(--font-size-16); color:var(--color-text-secondary); max-width:var(--container-reading);">
-        面向 AI 与云服务的中文社区：模型选型、部署上云、踩坑记录与工具横评，话题投票决定下一篇文章写什么。
+
+      <p class="hero-subtitle animate-in">
+        面向开发者的实战长文与工具横评：模型微调、架构部署、踩坑记录，更由社区投票决定下一篇写什么。
       </p>
+
+      <!-- 快速搜索胶囊 -->
+      <form class="hero-search-form glass-pill animate-in" action="/articles" method="get" role="search">
+        <svg class="search-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <circle cx="11" cy="11" r="7"></circle>
+          <path d="m20 20-3.5-3.5"></path>
+        </svg>
+        <input
+          class="hero-search-input"
+          type="search"
+          name="q"
+          placeholder="搜索 AI 模型、Cloudflare Workers、Docker 实战..."
+          aria-label="搜索实战文章"
+        />
+        <button type="submit" class="btn btn--primary hero-search-btn">
+          探索
+        </button>
+      </form>
+
       {
         hotTags.length > 0 && (
-          <nav aria-label="热门标签" style="display:flex; flex-wrap:wrap; gap:var(--space-2);">
+          <nav aria-label="热门标签" class="hero-tags animate-in">
+            <span class="tags-prefix">热搜方向：</span>
             {hotTags.map(([tag, count]) => (
               <a href={`/articles?q=${encodeURIComponent(tag)}`} class="tag">
-                #{tag} <span style="color:var(--color-text-muted); margin-left:var(--space-1);">{count}</span>
+                #{tag} <span class="tag-count">{count}</span>
               </a>
             ))}
           </nav>
@@ -59,60 +89,101 @@ const statusLabel: Record<string, string> = { open: '征集中', planned: '规�
     </div>
   </section>
 
-  <div class="container" style="padding-block:var(--space-8);">
+  <!-- 主体内容区域（博客 + 侧边栏联动） -->
+  <div class="container main-content-layout">
     <div class="layout-community">
-      <!-- 左：最新文章 -->
-      <section aria-labelledby="latest-title">
-        <div style="display:flex; align-items:baseline; justify-content:space-between; gap:var(--space-4); margin-bottom:var(--space-4);">
-          <h2 id="latest-title" style="margin:0; font-size:var(--font-size-18); font-weight:700;">最新文章</h2>
-          <a href="/articles" style="font-size:var(--font-size-13);">查看全部 →</a>
-        </div>
-
+      <!-- 左：博客精选与最新长文 -->
+      <section aria-labelledby="latest-title" class="articles-column">
+        <!-- 如果有置顶文章，渲染焦点卡片 -->
         {
-          latest.length ? (
-            <div class="feed-grid stagger">
-              {latest.map((a) => <ArticleCard article={a} />)}
-            </div>
-          ) : (
-            <div class="card" style="text-align:center; color:var(--color-text-muted); font-size:var(--font-size-14);">
-              还没有文章，去后台发布第一篇吧。
+          featuredArticle && (
+            <div class="featured-wrapper animate-in">
+              <div class="section-header">
+                <span class="section-label">✦ 精选聚焦</span>
+              </div>
+              <ArticleCard article={featuredArticle} featured={true} />
             </div>
           )
         }
+
+        <div class="section-header" style="margin-top:var(--space-8);">
+          <h2 id="latest-title" class="section-title">最新博文</h2>
+          <a href="/articles" class="view-all-link">查看全部文章 →</a>
+        </div>
+
+        {
+          regularArticles.length ? (
+            <div class="feed-grid stagger">
+              {regularArticles.map((a) => <ArticleCard article={a} />)}
+            </div>
+          ) : !featuredArticle ? (
+            <div class="glass-card empty-state">
+              <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="margin:0 auto var(--space-3); color:var(--color-text-muted);">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                <polyline points="14 2 14 8 20 8"></polyline>
+                <line x1="16" y1="13" x2="8" y2="13"></line>
+                <line x1="16" y1="17" x2="8" y2="17"></line>
+                <polyline points="10 9 9 9 8 9"></polyline>
+              </svg>
+              <p style="margin:0;">暂无文章发布，欢迎访问后台撰写第一篇实战解析。</p>
+            </div>
+          ) : null
+        }
       </section>
 
-      <!-- 右：热门话题 + 征集 CTA -->
-      <aside aria-label="侧边栏" style="display:flex; flex-direction:column; gap:var(--space-5);">
-        <section class="card" style="padding:var(--space-5);">
-          <div style="display:flex; align-items:baseline; justify-content:space-between; margin-bottom:var(--space-4);">
-            <h2 style="margin:0; font-size:var(--font-size-16); font-weight:700;">热门话题</h2>
-            <a href="/topics" style="font-size:var(--font-size-12); color:var(--color-text-muted);">全部</a>
+      <!-- 右：博客 × 论坛 结合与侧边栏看板 -->
+      <aside aria-label="侧边栏" class="sidebar-column">
+        <!-- 论坛热门话题看板 -->
+        <section class="glass-card sidebar-card">
+          <div class="sidebar-card-header">
+            <div class="header-left">
+              <span class="icon-sparkle">💡</span>
+              <h2 class="sidebar-card-title">社区共创话题</h2>
+            </div>
+            <a href="/topics" class="sidebar-card-more">进入论坛 →</a>
           </div>
+
+          <p class="sidebar-card-intro">
+            读者的需求就是下一篇博客的源泉。支持你关注的话题：
+          </p>
+
           {
             hotTopics.length ? (
-              <ul style="list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:var(--space-3);">
+              <ul class="topic-sidebar-list">
                 {hotTopics.map((t) => (
-                  <li style="display:flex; align-items:flex-start; justify-content:space-between; gap:var(--space-3);">
-                    <a href="/topics" style="color:var(--color-text); font-size:var(--font-size-14); line-height:var(--leading-snug); font-weight:500;">{t.title}</a>
-                    <span style="flex-shrink:0; display:flex; align-items:center; gap:var(--space-2);">
-                      <span class="badge badge--{t.status}">{statusLabel[t.status] || t.status}</span>
-                      <span style="font-size:var(--font-size-13); color:var(--color-text-muted); font-variant-numeric:tabular-nums;">{t.voteCount}</span>
-                    </span>
+                  <li class="topic-sidebar-item">
+                    <a href="/topics" class="topic-sidebar-link">
+                      <span class="topic-dot"></span>
+                      <span class="topic-text">{t.title}</span>
+                    </a>
+                    <div class="topic-sidebar-meta">
+                      <span class={`badge badge--${t.status}`}>{statusLabel[t.status] || t.status}</span>
+                      <span class="topic-vote-badge">▲ {t.voteCount}</span>
+                    </div>
                   </li>
                 ))}
               </ul>
             ) : (
-              <p style="margin:0; font-size:var(--font-size-14); color:var(--color-text-muted);">还没有话题，去 /topics 提交一个。</p>
+              <p class="empty-hint">还没有话题，欢迎前往论坛提交第一个选题。</p>
             )
           }
+
+          <div style="margin-top:var(--space-4); text-align:center;">
+            <a href="/topics" class="btn btn--secondary" style="width:100%;">
+              查看全部候选话题
+            </a>
+          </div>
         </section>
 
-        <section style="background:var(--gradient-cta-card); border:1px solid var(--color-primary-border); border-radius:var(--radius-xl); padding:var(--space-5);">
-          <h2 style="margin:0 0 var(--space-2); font-size:var(--font-size-16); font-weight:700;">下一篇文章写什么？</h2>
-          <p style="margin:0 0 var(--space-4); font-size:var(--font-size-14); color:var(--color-text-secondary); line-height:var(--leading-normal);">
-            提交你想了解的 AI 与云服务话题，票数最高的优先安排。
+        <!-- 下一篇写什么 CTA -->
+        <section class="glass-card liquid-glow cta-card">
+          <h2 class="cta-title">下一篇文章写什么？</h2>
+          <p class="cta-desc">
+            你有想深入了解的 AI 模型评测、开源工具或云服务部署难点吗？在论坛发起讨论，高票直达创作者工作流。
           </p>
-          <a href="/topics" class="btn btn--primary">参与话题征集</a>
+          <a href="/topics" class="btn btn--primary cta-btn">
+            发起话题讨论
+          </a>
         </section>
       </aside>
     </div>
@@ -120,6 +191,259 @@ const statusLabel: Record<string, string> = { open: '征集中', planned: '规�
 </BaseLayout>
 
 <style>
-  .feed-grid { display: grid; grid-template-columns: 1fr; gap: var(--space-4); }
-  @media (min-width: 640px) { .feed-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+  .hero-section {
+    padding-top: var(--space-12);
+    padding-bottom: var(--space-10);
+    position: relative;
+    text-align: center;
+  }
+  .hero-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  .hero-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+    padding: 4px 14px;
+    border-radius: var(--radius-full);
+    background: var(--glass-bg-subtle);
+    border: 1px solid var(--glass-border);
+    backdrop-filter: blur(16px);
+    font-size: var(--font-size-12);
+    font-weight: 500;
+    color: var(--color-primary-text);
+    margin-bottom: var(--space-4);
+  }
+  .pulse-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--color-primary);
+    box-shadow: 0 0 8px var(--color-primary);
+  }
+  .hero-headline {
+    margin: 0 0 var(--space-3);
+    font-size: var(--font-size-36);
+    line-height: var(--leading-tight);
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    background: var(--gradient-brand-text);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    max-width: 48rem;
+  }
+  .hero-subtitle {
+    margin: 0 0 var(--space-6);
+    font-size: var(--font-size-16);
+    line-height: var(--leading-relaxed);
+    color: var(--color-text-secondary);
+    max-width: 38rem;
+  }
+  .hero-search-form {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    max-width: 32rem;
+    padding: 6px 8px 6px 16px;
+    margin-bottom: var(--space-5);
+    transition: all var(--duration-fast);
+  }
+  .hero-search-form:focus-within {
+    box-shadow: 0 12px 36px rgba(0, 113, 227, 0.16), 0 0 0 3px rgba(0, 113, 227, 0.25);
+    border-color: var(--color-primary-border);
+  }
+  .search-icon {
+    color: var(--color-text-muted);
+    flex-shrink: 0;
+    margin-right: var(--space-2);
+  }
+  .hero-search-input {
+    flex: 1;
+    border: none;
+    background: transparent;
+    font-size: var(--font-size-14);
+    color: var(--color-text);
+    outline: none;
+  }
+  .hero-search-input::placeholder {
+    color: var(--color-text-muted);
+  }
+  .hero-search-btn {
+    min-height: 2.25rem;
+    padding: 4px 16px;
+    font-size: var(--font-size-13);
+  }
+  .hero-tags {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-2);
+    font-size: var(--font-size-12);
+  }
+  .tags-prefix {
+    color: var(--color-text-muted);
+  }
+  .tag-count {
+    color: var(--color-text-muted);
+    margin-left: 2px;
+  }
+
+  .main-content-layout {
+    padding-top: var(--space-4);
+  }
+  .section-header {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    margin-bottom: var(--space-4);
+  }
+  .section-label {
+    font-size: var(--font-size-13);
+    font-weight: 700;
+    color: var(--color-primary);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+  .section-title {
+    margin: 0;
+    font-size: var(--font-size-20);
+    font-weight: 700;
+    letter-spacing: -0.015em;
+  }
+  .view-all-link {
+    font-size: var(--font-size-13);
+    font-weight: 500;
+    color: var(--color-primary);
+  }
+  .feed-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--space-5);
+  }
+  @media (min-width: 640px) {
+    .feed-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+
+  /* 侧边栏卡片 */
+  .sidebar-column {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-6);
+  }
+  .sidebar-card {
+    padding: var(--space-6);
+  }
+  .sidebar-card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: var(--space-2);
+  }
+  .header-left {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+  }
+  .icon-sparkle {
+    font-size: var(--font-size-16);
+  }
+  .sidebar-card-title {
+    margin: 0;
+    font-size: var(--font-size-16);
+    font-weight: 700;
+  }
+  .sidebar-card-more {
+    font-size: var(--font-size-12);
+    color: var(--color-text-muted);
+  }
+  .sidebar-card-intro {
+    margin: 0 0 var(--space-4);
+    font-size: var(--font-size-13);
+    color: var(--color-text-secondary);
+    line-height: var(--leading-normal);
+  }
+  .topic-sidebar-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+  }
+  .topic-sidebar-item {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-1);
+    padding-bottom: var(--space-3);
+    border-bottom: 1px solid var(--color-border-subtle);
+  }
+  .topic-sidebar-item:last-child {
+    border-bottom: none;
+    padding-bottom: 0;
+  }
+  .topic-sidebar-link {
+    display: flex;
+    align-items: baseline;
+    gap: var(--space-2);
+    color: var(--color-text);
+    font-size: var(--font-size-14);
+    font-weight: 600;
+    line-height: var(--leading-snug);
+  }
+  .topic-sidebar-link:hover {
+    color: var(--color-primary);
+  }
+  .topic-dot {
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: var(--color-primary);
+    flex-shrink: 0;
+    transform: translateY(-2px);
+  }
+  .topic-sidebar-meta {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-left: var(--space-3);
+    margin-top: 2px;
+  }
+  .topic-vote-badge {
+    font-size: var(--font-size-12);
+    font-weight: 600;
+    color: var(--color-text-muted);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .cta-card {
+    padding: var(--space-6);
+    border-color: var(--color-primary-border);
+    background: var(--gradient-cta-card);
+  }
+  .cta-title {
+    margin: 0 0 var(--space-2);
+    font-size: var(--font-size-16);
+    font-weight: 700;
+  }
+  .cta-desc {
+    margin: 0 0 var(--space-4);
+    font-size: var(--font-size-13);
+    color: var(--color-text-secondary);
+    line-height: var(--leading-normal);
+  }
+  .cta-btn {
+    width: 100%;
+  }
+  .empty-state {
+    padding: var(--space-10);
+    text-align: center;
+    color: var(--color-text-muted);
+    font-size: var(--font-size-14);
+  }
 </style>

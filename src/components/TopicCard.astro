@@ -6,31 +6,126 @@ interface Props {
   loggedIn: boolean;
 }
 const { topic, loggedIn } = Astro.props;
-const statusLabel: Record<string, string> = { open: '征集中', planned: '规划中', done: '已完成' };
+const statusLabel: Record<string, string> = {
+  open: '征集中',
+  planned: '规划创作中',
+  done: '已采纳出文',
+};
+const dateStr = topic.createdAt ? new Date(topic.createdAt).toISOString().slice(0, 10) : '';
 ---
-<article class="card" style="display:flex; gap:var(--space-4); align-items:flex-start;" data-topic-id={topic.id}>
+<article class="glass-card glass-card--interactive liquid-glow topic-item-card" data-topic-id={topic.id}>
+  <!-- 左侧：液态玻璃投票胶囊 -->
   <button
-    class="vote-btn"
+    class="vote-capsule vote-btn"
     type="button"
     data-id={topic.id}
-    aria-label={loggedIn ? '投票或取消投票' : '登录后可投票'}
-    title={loggedIn ? '投票 / 取消投票' : '登录后可投票'}
+    aria-label={loggedIn ? '支持该话题' : '登录后投票'}
+    title={loggedIn ? '支持该话题' : '登录后投票'}
   >
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-      <path d="m5 15 7-7 7 7"></path>
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" class="vote-icon">
+      <path d="m18 15-6-6-6 6"></path>
     </svg>
-    <span class="vote-btn__count" data-count={topic.id}>{topic.voteCount}</span>
+    <span class="vote-capsule__count" data-count={topic.id}>{topic.voteCount}</span>
   </button>
 
-  <div style="flex:1; min-width:0;">
-    <h3 style="margin:0 0 var(--space-1); font-size:var(--font-size-16); font-weight:600; line-height:var(--leading-snug);">
+  <!-- 右侧：话题内容与状态 -->
+  <div class="topic-body">
+    <div class="topic-meta">
+      <span class={`badge badge--${topic.status}`}>
+        <span class="status-indicator"></span>
+        {statusLabel[topic.status] || topic.status}
+      </span>
+      {dateStr && <time datetime={dateStr} class="topic-time">{dateStr}</time>}
+    </div>
+
+    <h3 class="topic-title">
       {topic.title}
-      {topic.status !== 'open' && <span class={`badge badge--${topic.status}`} style="margin-left:var(--space-2);">{statusLabel[topic.status] || topic.status}</span>}
     </h3>
-    {topic.description ? (
-      <p style="margin:0; font-size:var(--font-size-14); color:var(--color-text-secondary); line-height:var(--leading-normal); white-space:pre-wrap;">
+
+    {topic.description && (
+      <p class="topic-desc">
         {topic.description}
       </p>
-    ) : null}
+    )}
+
+    {topic.status === 'done' && (
+      <div class="topic-pipeline-badge">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5Z"></path>
+          <path d="M6 6h10M6 10h10"></path>
+        </svg>
+        <span>已由社区投票孵化为正式博文</span>
+        <a href="/articles" class="pipeline-link">前往阅读 →</a>
+      </div>
+    )}
   </div>
 </article>
+
+<style>
+  .topic-item-card {
+    display: flex;
+    gap: var(--space-4);
+    align-items: flex-start;
+    padding: var(--space-5);
+  }
+  .vote-icon {
+    transition: transform var(--duration-fast) var(--ease-spring);
+  }
+  .vote-capsule:hover .vote-icon {
+    transform: translateY(-2px);
+  }
+  .topic-body {
+    flex: 1;
+    min-width: 0;
+  }
+  .topic-meta {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    margin-bottom: var(--space-2);
+  }
+  .status-indicator {
+    display: inline-block;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: currentColor;
+  }
+  .topic-time {
+    font-size: var(--font-size-12);
+    color: var(--color-text-muted);
+  }
+  .topic-title {
+    margin: 0 0 var(--space-2);
+    font-size: var(--font-size-16);
+    font-weight: 700;
+    line-height: var(--leading-snug);
+    color: var(--color-text);
+  }
+  .topic-desc {
+    margin: 0;
+    font-size: var(--font-size-14);
+    color: var(--color-text-secondary);
+    line-height: var(--leading-normal);
+    white-space: pre-wrap;
+  }
+  .topic-pipeline-badge {
+    margin-top: var(--space-3);
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+    padding: 4px 12px;
+    font-size: var(--font-size-12);
+    font-weight: 500;
+    color: var(--color-success);
+    background: var(--color-success-bg);
+    border: 1px solid var(--color-success-border);
+    border-radius: var(--radius-full);
+  }
+  .pipeline-link {
+    color: var(--color-success);
+    font-weight: 600;
+    text-decoration: underline;
+    margin-left: var(--space-1);
+  }
+</style>

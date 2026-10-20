@@ -4,8 +4,9 @@ import type { Article } from '../db/schema';
 interface Props {
   article: Article;
   authorName?: string;
+  featured?: boolean;
 }
-const { article, authorName = '社区作者' } = Astro.props;
+const { article, authorName = '社区作者', featured = false } = Astro.props;
 
 let tags: string[] = [];
 try {
@@ -16,25 +17,142 @@ try {
 if (!Array.isArray(tags)) tags = [];
 
 const dateStr = article.publishedAt ? new Date(article.publishedAt).toISOString().slice(0, 10) : '';
+
+// 估算阅读时长（中文按每分钟 350 字估算）
+const contentLen = (article.content || article.summary || '').length;
+const readTime = Math.max(1, Math.round(contentLen / 350));
 ---
-<article class="card card--interactive" style="display:flex; flex-direction:column; justify-content:space-between; gap:var(--space-3); height:100%;">
-  <div>
-    <div style="display:flex; align-items:center; justify-content:space-between; gap:var(--space-2); margin-bottom:var(--space-2);">
-      <div style="display:flex; gap:var(--space-1); flex-wrap:wrap;">
-        {tags.slice(0, 2).map((tag: string) => <span class="tag">#{tag}</span>)}
+<article class={`glass-card glass-card--interactive liquid-glow article-card ${featured ? 'article-card--featured' : ''}`}>
+  <div class="card-content">
+    <div class="card-meta-top">
+      <div class="tag-list">
+        {tags.slice(0, 3).map((tag: string) => <span class="tag">#{tag}</span>)}
       </div>
-      {article.link && <span class="badge badge--external">↗ 外链</span>}
+      {article.link && <span class="badge badge--external">↗ 原文外链</span>}
     </div>
-    <h3 style="margin:0 0 var(--space-2); font-size:var(--font-size-18); line-height:var(--leading-snug); font-weight:600;">
-      <a href={`/articles/${article.slug}`} style="color:var(--color-text);">{article.title}</a>
+
+    <h3 class="card-title">
+      <a href={`/articles/${article.slug}`} class="title-link">{article.title}</a>
     </h3>
-    <p class="line-clamp-2" style="margin:0; font-size:var(--font-size-14); color:var(--color-text-secondary); line-height:var(--leading-normal);">
-      {article.summary || ''}
-    </p>
+
+    {article.summary && (
+      <p class="card-summary line-clamp-2">
+        {article.summary}
+      </p>
+    )}
   </div>
-  <footer style="display:flex; align-items:center; gap:var(--space-2); font-size:var(--font-size-13); color:var(--color-text-muted); padding-top:var(--space-2); border-top:1px solid var(--color-border-subtle);">
-    <span>{authorName}</span>
-    <span aria-hidden="true">·</span>
-    <time datetime={dateStr}>{dateStr}</time>
+
+  <footer class="card-footer">
+    <div class="author-info">
+      <div class="avatar-dot" aria-hidden="true"></div>
+      <span class="author-name">{authorName}</span>
+      <span class="divider" aria-hidden="true">·</span>
+      <time datetime={dateStr} class="publish-time">{dateStr}</time>
+      <span class="divider" aria-hidden="true">·</span>
+      <span class="read-estimate">{readTime} 分钟阅读</span>
+    </div>
+    <a href={`/articles/${article.slug}`} class="read-arrow" aria-label={`阅读 ${article.title}`}>
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M5 12h14M12 5l7 7-7 7"></path>
+      </svg>
+    </a>
   </footer>
 </article>
+
+<style>
+  .article-card {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    height: 100%;
+    padding: var(--space-6);
+  }
+  .article-card--featured {
+    border-color: var(--color-primary-border);
+    box-shadow: 0 16px 36px -6px rgba(0, 113, 227, 0.12), inset 0 1px 1px var(--glass-highlight);
+  }
+  .card-content {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+  }
+  .card-meta-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-2);
+  }
+  .tag-list {
+    display: flex;
+    gap: var(--space-2);
+    flex-wrap: wrap;
+  }
+  .card-title {
+    margin: 0;
+    font-size: var(--font-size-18);
+    line-height: var(--leading-snug);
+    font-weight: 700;
+    letter-spacing: -0.015em;
+  }
+  .title-link {
+    color: var(--color-text);
+    transition: color var(--duration-fast);
+  }
+  .title-link:hover {
+    color: var(--color-primary);
+  }
+  .card-summary {
+    margin: 0;
+    font-size: var(--font-size-14);
+    color: var(--color-text-secondary);
+    line-height: var(--leading-normal);
+  }
+  .card-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-3);
+    margin-top: var(--space-5);
+    padding-top: var(--space-3);
+    border-top: 1px solid var(--color-border-subtle);
+    font-size: var(--font-size-12);
+    color: var(--color-text-muted);
+  }
+  .author-info {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    flex-wrap: wrap;
+  }
+  .avatar-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--color-primary);
+    box-shadow: 0 0 6px var(--color-primary);
+  }
+  .author-name {
+    font-weight: 500;
+    color: var(--color-text-secondary);
+  }
+  .divider {
+    opacity: 0.6;
+  }
+  .read-arrow {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.75rem;
+    height: 1.75rem;
+    border-radius: 50%;
+    color: var(--color-text-muted);
+    background: var(--color-surface-subtle);
+    transition: all var(--duration-fast) var(--ease-spring);
+    flex-shrink: 0;
+  }
+  .article-card:hover .read-arrow {
+    background: var(--color-primary);
+    color: #ffffff;
+    transform: translateX(3px);
+  }
+</style>

@@ -37,18 +37,46 @@ const user: User | null = Astro.locals.user ?? null;
     </script>
   </head>
   <body>
+    <!-- 顶部液态阅读进度条 -->
+    <div id="reading-progress" class="reading-progress-bar" style="display:none;" aria-hidden="true"></div>
+
+    <!-- 苹果风环境折射微光球 -->
+    <div class="ambient-background" aria-hidden="true">
+      <div class="ambient-orb ambient-orb--1"></div>
+      <div class="ambient-orb ambient-orb--2"></div>
+    </div>
+
     <Navbar user={user} currentPath={Astro.url.pathname} />
+
     <main id="main-content">
       <slot />
     </main>
+
     <Footer />
+
     <script is:inline>
+      // 深浅色主题切换
       document.getElementById('theme-toggle')?.addEventListener('click', function () {
         var root = document.documentElement;
         var next = root.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
         root.setAttribute('data-theme', next);
         try { localStorage.setItem('chuhai-theme', next); } catch (e) {}
       });
+
+      // 液态微光交互 (Liquid Glow Tracking)
+      (function() {
+        if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+        var handleMouseMove = function(e) {
+          var target = e.target && e.target.closest ? e.target.closest('.liquid-glow') : null;
+          if (!target) return;
+          var rect = target.getBoundingClientRect();
+          var x = e.clientX - rect.left;
+          var y = e.clientY - rect.top;
+          target.style.setProperty('--mx', x + 'px');
+          target.style.setProperty('--my', y + 'px');
+        };
+        document.addEventListener('mousemove', handleMouseMove, { passive: true });
+      })();
     </script>
   </body>
 </html>
