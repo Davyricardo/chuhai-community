@@ -7,6 +7,8 @@ import {
   findUserByEmail,
   hashPassword,
   isFirstUser,
+  isValidEmail,
+  MIN_PASSWORD_LENGTH,
   sessionCookieName,
 } from '../../../lib/auth';
 import { checkRate, clientIp } from '../../../lib/ratelimit';
@@ -21,6 +23,16 @@ export const POST: APIRoute = async ({ request, locals }) => {
 
   if (!email || !code) {
     return json({ ok: false, error: '邮箱和验证码必填' }, 400);
+  }
+
+  // 与发码接口共用同一套邮箱判据；form 关了浏览器校验，这里必须自己拦
+  if (!isValidEmail(email)) {
+    return json({ ok: false, error: '邮箱格式不正确' }, 400);
+  }
+
+  // 密码可选，填了就要够长
+  if (password && password.length < MIN_PASSWORD_LENGTH) {
+    return json({ ok: false, error: `密码至少 ${MIN_PASSWORD_LENGTH} 位，或留空改用验证码登录` }, 400);
   }
 
   const turnstileToken = String(body.turnstileToken || '');

@@ -1,6 +1,6 @@
 import type { APIRoute } from 'astro';
 import { getDB } from '../../../db';
-import { issueEmailCode } from '../../../lib/auth';
+import { issueEmailCode, isValidEmail } from '../../../lib/auth';
 import { sendCodeEmail } from '../../../lib/mail';
 import { checkRate, clientIp } from '../../../lib/ratelimit';
 
@@ -26,7 +26,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
     });
   }
 
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+  if (!isValidEmail(email)) {
     return new Response(JSON.stringify({ ok: false, error: '邮箱格式不正确' }), {
       status: 400,
       headers: { 'Content-Type': 'application/json' },

@@ -45,6 +45,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
         <div class="form-field">
           <label class="form-label" for="password">密码</label>
           <input class="form-input" id="password" name="password" type="password" autocomplete="new-password" placeholder="可留空，留空则用验证码登录" />
+          <span class="form-hint">可留空；若填写，至少 8 位</span>
         </div>
 
         <div class="turnstile-slot">
@@ -110,6 +111,21 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
       form.addEventListener('submit', async (e) => {
         e.preventDefault();
         const btn = form.querySelector('button[type="submit"]');
+
+        // 本地先拦一道，省一次往返；后端仍会再校验一次
+        const password = form.password.value;
+        if (password && password.length < 8) {
+          show('密码至少 8 位，或留空改用验证码登录', false);
+          form.password.focus();
+          return;
+        }
+        const email = form.email.value.trim();
+        if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+          show('邮箱格式不正确', false);
+          form.email.focus();
+          return;
+        }
+
         const original = btn.innerHTML;
         btn.disabled = true;
         btn.innerHTML = '<span class="btn__spinner"></span>注册中…';

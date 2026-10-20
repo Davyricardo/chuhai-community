@@ -12,6 +12,16 @@ export function now(): number {
   return Date.now();
 }
 
+/** 邮箱格式：注册与发码共用同一套判据，避免两处各写一份正则 */
+export const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+export function isValidEmail(email: string): boolean {
+  return EMAIL_RE.test(email);
+}
+
+/** 密码最短长度。密码可选（留空走验证码登录），填了就按这个下限 */
+export const MIN_PASSWORD_LENGTH = 8;
+
 /** 密码哈希（bcryptjs 为纯 JS，Workers 可用） */
 export async function hashPassword(plain: string): Promise<string> {
   return bcrypt.hash(plain, 10);
