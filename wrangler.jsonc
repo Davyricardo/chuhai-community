@@ -7,7 +7,6 @@
     "enabled": true
   },
   "routes": [
-    { "pattern": "chuhai.kittywizards.com", "custom_domain": true },
     { "pattern": "si.kittywizards.com", "custom_domain": true }
   ],
   "d1_databases": [
