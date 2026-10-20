@@ -35,15 +35,15 @@ const hotTags = [...tagSet.entries()].sort((a, b) => b[1] - a[1]).slice(0, 8);
 const statusLabel: Record<string, string> = { open: '征集中', planned: '规划中', done: '已完成' };
 ---
 
-<BaseLayout title="首页" description="出海实战分享、话题投票与工具推荐社区">
+<BaseLayout title="首页" description="AI 与云服务实战攻略、话题投票与工具推荐社区">
   <!-- Hero -->
   <section style="background:var(--gradient-hero-bg); border-bottom:1px solid var(--color-border);">
     <div class="container" style="padding-block:var(--space-12);">
       <h1 style="margin:0 0 var(--space-3); font-size:var(--font-size-30); line-height:var(--leading-tight); font-weight:800; background:var(--gradient-brand-text); -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent; color:var(--color-primary-text);">
-        出海实战 · 少走弯路
+        AI 与云服务实战 · 少走弯路
       </h1>
       <p style="margin:0 0 var(--space-6); font-size:var(--font-size-16); color:var(--color-text-secondary); max-width:var(--container-reading);">
-        面向 AI 产品出海与独立开发者的中文社区：真实踩坑记录、工具横评、话题投票决定下一篇文章写什么。
+        面向 AI 与云服务的中文社区：模型选型、部署上云、踩坑记录与工具横评，话题投票决定下一篇文章写什么。
       </p>
       {
         hotTags.length > 0 && (
@@ -110,7 +110,7 @@ const statusLabel: Record<string, string> = { open: '征集中', planned: '规�
         <section style="background:var(--gradient-cta-card); border:1px solid var(--color-primary-border); border-radius:var(--radius-xl); padding:var(--space-5);">
           <h2 style="margin:0 0 var(--space-2); font-size:var(--font-size-16); font-weight:700;">下一篇文章写什么？</h2>
           <p style="margin:0 0 var(--space-4); font-size:var(--font-size-14); color:var(--color-text-secondary); line-height:var(--leading-normal);">
-            提交你想了解的出海话题，票数最高的优先安排。
+            提交你想了解的 AI 与云服务话题，票数最高的优先安排。
           </p>
           <a href="/topics" class="btn btn--primary">参与话题征集</a>
         </section>

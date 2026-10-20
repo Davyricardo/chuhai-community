@@ -10,7 +10,7 @@ const user = Astro.locals.user ?? null;
 const list = await db.select().from(topics).orderBy(desc(topics.voteCount), desc(topics.createdAt)).limit(50);
 ---
 
-<BaseLayout title="话题征集" description="投票选出你最想了解的出海话题，高票优先创作">
+<BaseLayout title="话题征集" description="投票选出你最想了解的 AI 与云服务话题，高票优先创作">
   <div class="container" style="padding-block:var(--space-8); max-width:var(--container-reading);">
     <h1 style="margin:0 0 var(--space-2); font-size:var(--font-size-24); font-weight:800;">话题征集</h1>
     <p style="margin:0 0 var(--space-6); font-size:var(--font-size-14); color:var(--color-text-muted);">

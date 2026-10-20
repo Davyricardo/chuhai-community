@@ -37,11 +37,11 @@ const categories = [...tagSet.entries()].sort((a, b) => b[1] - a[1]).slice(0, 10
 const list = active ? all.filter((a) => (a.tags || '').includes(active)) : all;
 ---
 
-<BaseLayout title="工具推荐" description="出海常用的建站、支付、SEO、AI 工具整理">
+<BaseLayout title="工具推荐" description="AI 与云服务常用工具整理：模型、部署、存储、监控">
   <div class="container" style="padding-block:var(--space-8);">
     <h1 style="margin:0 0 var(--space-2); font-size:var(--font-size-24); font-weight:800;">工具推荐</h1>
     <p style="margin:0 0 var(--space-6); font-size:var(--font-size-14); color:var(--color-text-muted); max-width:var(--container-reading);">
-      出海常用的建站、支付、SEO、AI 工具整理。后台发布文章时把标签写成「工具」即可收录到这里。
+      AI 与云服务常用工具整理：模型与 API、部署与容器、存储与 CDN、监控与告警。后台发布文章时把标签写成「工具」即可收录到这里。
     </p>
 
     {
