@@ -310,6 +310,29 @@ main { flex: 1; }
 a { color: var(--color-primary); text-decoration: none; transition: color var(--duration-fast) var(--ease-standard); }
 a:hover { color: var(--color-primary-hover); }
 :focus-visible { outline: none; box-shadow: var(--ring-focus); border-radius: var(--radius-sm); }
+
+/* 胶囊搜索框与内嵌输入框彻底禁用自身额外聚焦框，由外层胶囊统一呈现 */
+.search-input,
+.hero-search-input,
+.glass-pill input {
+  border: none !important;
+  outline: none !important;
+  box-shadow: none !important;
+  background: transparent !important;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+}
+.search-input:focus,
+.search-input:focus-visible,
+.hero-search-input:focus,
+.hero-search-input:focus-visible,
+.glass-pill input:focus,
+.glass-pill input:focus-visible {
+  outline: none !important;
+  box-shadow: none !important;
+  border: none !important;
+}
 img, svg { max-width: 100%; height: auto; display: block; }
 
 /* ===== 苹果风环境背景微光球 (Ambient Orbs) ===== */

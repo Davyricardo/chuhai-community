@@ -262,11 +262,21 @@ const regularArticles = latest.length > 1 ? latest.slice(1) : [];
   }
   .hero-search-input {
     flex: 1;
-    border: none;
-    background: transparent;
+    border: none !important;
+    outline: none !important;
+    box-shadow: none !important;
+    background: transparent !important;
     font-size: var(--font-size-14);
     color: var(--color-text);
-    outline: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+  }
+  .hero-search-input:focus,
+  .hero-search-input:focus-visible {
+    border: none !important;
+    outline: none !important;
+    box-shadow: none !important;
   }
   .hero-search-input::placeholder {
     color: var(--color-text-muted);

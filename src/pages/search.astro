@@ -52,7 +52,6 @@ const total = articleHits.length + topicHits.length;
           name="q"
           value={q}
           placeholder="输入关键词检索（如 Docker、Claude、Workers、架构）..."
-          autofocus
           aria-label="输入关键词"
         />
         <button class="btn btn--primary" type="submit">搜索</button>
@@ -177,11 +176,21 @@ const total = articleHits.length + topicHits.length;
   }
   .search-input {
     flex: 1;
-    border: none;
-    background: transparent;
+    border: none !important;
+    outline: none !important;
+    box-shadow: none !important;
+    background: transparent !important;
     font-size: var(--font-size-15);
     color: var(--color-text);
-    outline: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+  }
+  .search-input:focus,
+  .search-input:focus-visible {
+    border: none !important;
+    outline: none !important;
+    box-shadow: none !important;
   }
   .search-stats-badge {
     margin-top: var(--space-4);

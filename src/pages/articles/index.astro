@@ -152,11 +152,21 @@ try {
   }
   .search-input {
     flex: 1;
-    border: none;
-    background: transparent;
+    border: none !important;
+    outline: none !important;
+    box-shadow: none !important;
+    background: transparent !important;
     font-size: var(--font-size-14);
     color: var(--color-text);
-    outline: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+  }
+  .search-input:focus,
+  .search-input:focus-visible {
+    border: none !important;
+    outline: none !important;
+    box-shadow: none !important;
   }
   .search-input::placeholder {
     color: var(--color-text-muted);
