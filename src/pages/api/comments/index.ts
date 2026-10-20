@@ -42,6 +42,7 @@ export const POST: APIRoute = async ({ request, cookies }) => {
   const db = getDB();
   const user = await getSessionUser(db, cookies.get(sessionCookieName())?.value);
   if (!user) return json({ ok: false, error: '请先登录' }, 401);
+  if (!user.emailVerified) return json({ ok: false, error: '邮箱未验证，请先完成邮箱验证' }, 403);
 
   // 限流：同一用户每 10 秒最多 5 条评论
   const limit = await checkRate(db, `comment:user:${user.id}`, 5, 10_000);

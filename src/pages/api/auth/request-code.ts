@@ -13,12 +13,13 @@ function json(data: unknown, status = 200) {
 
 export const POST: APIRoute = async ({ request, locals }) => {
   let email = '';
-  let purpose: 'register' | 'login' | 'reset' = 'register';
+  // 登录已改为邮箱 + 密码，不再发登录验证码；仅保留 register 与 reset
+  let purpose: 'register' | 'reset' = 'register';
 
   try {
     const body = await request.json();
     email = String(body.email || '').trim();
-    if (body.purpose === 'login' || body.purpose === 'reset') purpose = body.purpose;
+    if (body.purpose === 'reset') purpose = body.purpose;
   } catch {
     return new Response(JSON.stringify({ ok: false, error: '请求格式错误' }), {
       status: 400,

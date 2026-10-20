@@ -32,18 +32,18 @@ export const POST: APIRoute = async ({ request, locals }) => {
     return json({ ok: false, error: '邮箱格式不正确' }, 400);
   }
 
-  // 密码可选：两边都空 = 走验证码登录，不算不一致（这是截图那个站踩的坑）
-  if (password || passwordConfirm) {
-    if (!passwordConfirm) {
-      return json({ ok: false, error: '请再次输入密码' }, 400);
-    }
-    if (password !== passwordConfirm) {
-      return json({ ok: false, error: '两次输入的密码不一致' }, 400);
-    }
-    // 两次一致后再看长度
-    if (password.length < MIN_PASSWORD_LENGTH) {
-      return json({ ok: false, error: `密码至少 ${MIN_PASSWORD_LENGTH} 位，或留空改用验证码登录` }, 400);
-    }
+  // 密码不再可选：登录方式是邮箱 + 密码
+  if (!password) {
+    return json({ ok: false, error: '请设置密码' }, 400);
+  }
+  if (!passwordConfirm) {
+    return json({ ok: false, error: '请再次输入密码' }, 400);
+  }
+  if (password !== passwordConfirm) {
+    return json({ ok: false, error: '两次输入的密码不一致' }, 400);
+  }
+  if (password.length < MIN_PASSWORD_LENGTH) {
+    return json({ ok: false, error: `密码至少 ${MIN_PASSWORD_LENGTH} 位` }, 400);
   }
 
   const turnstileToken = String(body.turnstileToken || '');

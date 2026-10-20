@@ -19,8 +19,21 @@ export function isValidEmail(email: string): boolean {
   return EMAIL_RE.test(email);
 }
 
-/** 密码最短长度。密码可选（留空走验证码登录），填了就按这个下限 */
+/** 密码最短长度。注册必须设置密码（登录用邮箱 + 密码） */
 export const MIN_PASSWORD_LENGTH = 8;
+
+/** 邮箱未验证的提示：登录与所有互动接口共用同一句文案 */
+export const EMAIL_UNVERIFIED_MESSAGE = '邮箱未验证，请先完成邮箱验证';
+
+/**
+ * 互动门槛：已登录且邮箱已验证才放行。
+ * 返回 null 表示放行，否则返回给前端的错误文案。
+ */
+export function interactBlocked(user: User | null): string | null {
+  if (!user) return '请先登录';
+  if (!user.emailVerified) return EMAIL_UNVERIFIED_MESSAGE;
+  return null;
+}
 
 /** 密码哈希（bcryptjs 为纯 JS，Workers 可用） */
 export async function hashPassword(plain: string): Promise<string> {

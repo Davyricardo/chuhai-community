@@ -29,6 +29,7 @@ export const POST: APIRoute = async ({ request, cookies }) => {
   const db = getDB();
   const user = await getSessionUser(db, cookies.get(sessionCookieName())?.value);
   if (!user) return json({ ok: false, error: '请先登录' }, 401);
+  if (!user.emailVerified) return json({ ok: false, error: '邮箱未验证，请先完成邮箱验证' }, 403);
   if (user.role !== 'admin') return json({ ok: false, error: '需要管理员权限' }, 403);
 
   const body = await request.json().catch(() => ({}));

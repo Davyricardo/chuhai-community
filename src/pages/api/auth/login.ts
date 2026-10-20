@@ -2,6 +2,7 @@ import type { APIRoute } from 'astro';
 import { getDB } from '../../../db';
 import {
   createSession,
+  EMAIL_UNVERIFIED_MESSAGE,
   findUserByEmail,
   sessionCookieName,
   verifyPassword,
@@ -26,6 +27,11 @@ export const POST: APIRoute = async ({ request, locals }) => {
 
   if (!user || !(await verifyPassword(password, user.passwordHash))) {
     return json({ ok: false, error: '邮箱或密码不正确' }, 401);
+  }
+
+  // 邮箱未验证一律不放行（正常注册流程会在验证后才建号，这里是兜底）
+  if (!user.emailVerified) {
+    return json({ ok: false, error: EMAIL_UNVERIFIED_MESSAGE }, 403);
   }
 
   const sessionId = await createSession(db, user.id);

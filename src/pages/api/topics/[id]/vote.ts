@@ -17,6 +17,7 @@ export const POST: APIRoute = async ({ params, cookies }) => {
   const db = getDB();
   const user = await getSessionUser(db, cookies.get(sessionCookieName())?.value);
   if (!user) return json({ ok: false, error: '请先登录' }, 401);
+  if (!user.emailVerified) return json({ ok: false, error: '邮箱未验证，请先完成邮箱验证' }, 403);
 
   const topicRows = await db.select().from(topics).where(eq(topics.id, topicId)).limit(1);
   if (!topicRows.length) return json({ ok: false, error: '话题不存在' }, 404);
