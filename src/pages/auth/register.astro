@@ -48,6 +48,12 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
           <span class="form-hint">可留空；若填写，至少 8 位</span>
         </div>
 
+        <div class="form-field">
+          <label class="form-label" for="passwordConfirm">确认密码</label>
+          <input class="form-input" id="passwordConfirm" name="passwordConfirm" type="password" autocomplete="new-password" placeholder="再次输入上面的密码" />
+          <span class="form-hint">需与上面完全一致；上面留空时这里也请留空</span>
+        </div>
+
         <div class="turnstile-slot">
           <div class="cf-turnstile" data-sitekey="0x4AAAAAAFa6NXpqnS6MFmGQ" data-theme="auto"></div>
         </div>
@@ -114,10 +120,24 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
 
         // 本地先拦一道，省一次往返；后端仍会再校验一次
         const password = form.password.value;
-        if (password && password.length < 8) {
-          show('密码至少 8 位，或留空改用验证码登录', false);
-          form.password.focus();
-          return;
+        const passwordConfirm = form.passwordConfirm.value;
+        // 两边都空 = 走验证码登录，不算不一致
+        if (password || passwordConfirm) {
+          if (!passwordConfirm) {
+            show('请再次输入密码', false);
+            form.passwordConfirm.focus();
+            return;
+          }
+          if (password !== passwordConfirm) {
+            show('两次输入的密码不一致', false);
+            form.passwordConfirm.focus();
+            return;
+          }
+          if (password.length < 8) {
+            show('密码至少 8 位，或留空改用验证码登录', false);
+            form.password.focus();
+            return;
+          }
         }
         const email = form.email.value.trim();
         if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
@@ -136,6 +156,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
           code: form.code.value.trim(),
           displayName: form.displayName.value.trim(),
           password: form.password.value,
+          passwordConfirm: form.passwordConfirm.value,
           turnstileToken: document.querySelector('[name="cf-turnstile-response"]')?.value || '',
         };
 
