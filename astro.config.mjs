@@ -4,7 +4,7 @@ import react from '@astrojs/react';
 
 // https://astro.build/config
 export default defineConfig({
-  site: 'https://chuhai.kittywizards.com',
+  site: 'https://si.kittywizards.com',
   output: 'server',
   adapter: cloudflare({
     platformProxy: { enabled: true },

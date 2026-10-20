@@ -1,7 +1,7 @@
 # 出海内容社区 · 前端 UI 设计交接文档
 
 > 用途：把项目完整上下文交给 Gemini，由它产出**前端 UI 设计方案与设计规范**。
-> 站点：https://chuhai.kittywizards.com
+> 站点：https://si.kittywizards.com
 > 仓库：https://github.com/Davyricardo/chuhai-community
 > 文档版本：2026-10-19
 
@@ -26,7 +26,7 @@
 
 | 项 | 值 |
 |---|---|
-| 域名 | `chuhai.kittywizards.com`（Cloudflare 自定义域，已生效） |
+| 域名 | `si.kittywizards.com`（Cloudflare 自定义域，已生效） |
 | 托管 | Cloudflare Workers（`chuhai-community`） |
 | 数据库 | Cloudflare D1（`chuhai-db`，SQLite，9 张表） |
 | 发信 | Resend（域名已验证，用于注册验证码） |

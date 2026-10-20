@@ -4,7 +4,7 @@
  */
 import { env } from 'cloudflare:workers';
 
-const FROM = 'CHUHAI <noreply@kittywizards.com>';
+const FROM = 'ChatSI <noreply@kittywizards.com>';
 
 async function send(to: string, subject: string, text: string): Promise<boolean> {
   const key = (env as { RESEND_API_KEY?: string }).RESEND_API_KEY;
@@ -31,7 +31,7 @@ async function send(to: string, subject: string, text: string): Promise<boolean>
 export function sendCodeEmail(to: string, code: string): Promise<boolean> {
   return send(
     to,
-    '【CHUHAI】你的验证码',
+    '【ChatSI】你的验证码',
     `你的验证码是 ${code}，10 分钟内有效。\n\n如果不是你本人操作，请忽略此邮件。`,
   );
 }
